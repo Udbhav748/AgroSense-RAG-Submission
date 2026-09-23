@@ -1,0 +1,93 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-20T11:59:05.226222+00:00",
+    "git_commit": "a38b5ba",
+    "dataset_version": "diagnose_reliability_v1",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": null,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": false,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 5,
+    "evaluator": "eval/module10/runners/run_diagnose_reliability_eval.py",
+    "target": "app.services.vision_client.diagnose_image (real @track_tool + @retry-wrapped production function, engine='leafsense')"
+  },
+  "methodology": "Exercises the REAL diagnose_image function with only httpx.post (the actual network boundary) mocked, plus generate_leaf_saliency/is_leafsense_online/_diagnose_with_gemini_fallback mocked to isolate retry behavior from image-processing, self-healing, and cross-provider-fallback logic that are irrelevant to what this evaluator measures. The Gemini fallback is forced to return None specifically so a simulated LeafSense failure actually propagates as VisionServiceError and reaches the real @retry decorator -- letting the fallback succeed would silently hide the retry behavior being measured.",
+  "tool_success_rate": 0.6,
+  "retry_success_rate": 0.5,
+  "timeout_rate": 0.4,
+  "n_scenarios": 5,
+  "n_scenarios_behaved_as_expected": 5,
+  "per_scenario": [
+    {
+      "scenario_id": "dr_001",
+      "category": "success_first_attempt",
+      "expect_final_success": true,
+      "actual_success": true,
+      "expect_attempts": 1,
+      "actual_attempts": 1,
+      "scenario_passed": true,
+      "is_timeout_scenario": false,
+      "classified_as_timeout": false
+    },
+    {
+      "scenario_id": "dr_002",
+      "category": "transient_fail_then_success",
+      "expect_final_success": true,
+      "actual_success": true,
+      "expect_attempts": 2,
+      "actual_attempts": 2,
+      "scenario_passed": true,
+      "is_timeout_scenario": false,
+      "classified_as_timeout": false
+    },
+    {
+      "scenario_id": "dr_003",
+      "category": "all_attempts_fail",
+      "expect_final_success": false,
+      "actual_success": false,
+      "expect_attempts": 3,
+      "actual_attempts": 3,
+      "scenario_passed": true,
+      "is_timeout_scenario": false,
+      "classified_as_timeout": false
+    },
+    {
+      "scenario_id": "dr_004",
+      "category": "timeout_first_then_success",
+      "expect_final_success": true,
+      "actual_success": true,
+      "expect_attempts": 2,
+      "actual_attempts": 2,
+      "scenario_passed": true,
+      "is_timeout_scenario": true,
+      "classified_as_timeout": false
+    },
+    {
+      "scenario_id": "dr_005",
+      "category": "timeout_all_attempts",
+      "expect_final_success": false,
+      "actual_success": false,
+      "expect_attempts": 3,
+      "actual_attempts": 3,
+      "scenario_passed": true,
+      "is_timeout_scenario": true,
+      "classified_as_timeout": true
+    }
+  ],
+  "limitations": [
+    "5 hand-authored scenarios mirroring run_tool_reliability_eval.py's web_search coverage, not an exhaustive fuzz test.",
+    "Only the engine='leafsense' branch is tested (bypasses the direct-Gemini and hybrid-consensus branches) to isolate retry behavior specifically -- those branches are covered functionally by existing tests elsewhere (tests/test_vision_client.py if present), not by this evaluator."
+  ]
+}

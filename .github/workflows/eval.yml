@@ -1,0 +1,97 @@
+name: Eval (Manual)
+
+# Manual-only trigger — this calls the real LLM API and costs real quota.
+# The CI workflow uses a dummy key and never makes real calls; this one
+# needs real GEMINI_API_KEY / GROQ_API_KEY to produce meaningful metrics.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dataset:
+        description: "Dataset file to run (inside backend/eval/)"
+        required: true
+        default: "dataset_v1.json"
+        type: choice
+        options:
+          - dataset_v1.json
+          - dataset_v2.json
+          - dataset_v3.json
+      llm_provider:
+        description: "LLM provider to use (must match backend/.env values)"
+        required: true
+        default: "groq"
+        type: choice
+        options:
+          - gemini
+          - groq
+      delay:
+        description: "Seconds to sleep between entries (pace under rate limits)"
+        required: false
+        default: "0"
+        type: string
+      baseline:
+        description: "Baseline JSON to gate against (empty = skip regression gate)"
+        required: false
+        default: "eval/baselines/v2_groq.json"
+        type: string
+      regression_tol:
+        description: "Absolute regression tolerance on the 0-1 scale"
+        required: false
+        default: "0.05"
+        type: string
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # Real secrets — only this workflow references them.
+      # CI workflow (ci.yml) uses GEMINI_API_KEY=ci-test-key, which is
+      # sufficient because its tests stub out the LLM client.
+      GEMINI_API_KEY: ${{ secrets.EVAL_GEMINI_API_KEY }}
+      GROQ_API_KEY: ${{ secrets.EVAL_GROQ_API_KEY }}
+      API_KEY: ci-test-key  # dummy for auth; eval harness doesn't call HTTP
+      LLM_PROVIDER: ${{ github.event.inputs.llm_provider }}
+      FALLBACK_LLM_PROVIDER: ""
+      HYBRID_SEARCH_ENABLED: "true"
+      RERANKING_ENABLED: "false"
+      WEB_SEARCH_ENABLED: "false"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install tesseract-ocr
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr
+
+      - name: Install backend requirements
+        run: pip install -r requirements.txt
+
+      - name: Seed vector store with demo corpus
+        run: python scripts/ingest_corpus.py demo_corpus
+
+      - name: Run evaluation
+        run: python eval/run_eval.py --dataset ${{ github.event.inputs.dataset }} --delay ${{ github.event.inputs.delay }}
+
+      - name: Regression gate
+        if: ${{ github.event.inputs.baseline != '' }}
+        run: |
+          NEWEST=$(ls -1t eval/results/*.json | head -1)
+          python eval/regression_check.py \
+            --results "$NEWEST" \
+            --baseline ${{ github.event.inputs.baseline }} \
+            --tol ${{ github.event.inputs.regression_tol }}
+
+      - name: Upload evaluation results
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results-${{ github.event.inputs.dataset }}-${{ github.run_id }}
+          path: backend/eval/results/*.json
+          retention-days: 30

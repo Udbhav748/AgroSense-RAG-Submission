@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# Environment
+.env
+*.env
+
+# FAISS index / uploaded files
+backend/data/
+backend/uploads/
+backend/vector_store/
+
+# Eval run outputs (timestamped, regenerated per run) — ignored by default,
+# except the specific runs cited as evidence in docs/OPERATIONS.md and
+# docs/DESIGN_REVIEW.md, which stay tracked so those citations resolve.
+backend/eval/results/*.json
+!backend/eval/results/20260806T054206Z.json
+!backend/eval/results/20260806T070746Z.json
+!backend/eval/results/20260806T092932Z.json
+!backend/eval/results/20260806T093248Z.json
+!backend/eval/results/20260806T093526Z.json
+!backend/eval/results/20260806T093845Z.json
+!backend/eval/results/20260807T215538Z.json
+!backend/eval/results/20260809T211609Z.json
+!backend/eval/results/_full_capture_entries.json
+!backend/eval/results/_gemini_summarize_entries.json
+
+# Chat feedback events (local append-only log, not for GitHub)
+backend/feedback/*.jsonl
+
+# Uptime-check runtime state (local trailing-availability counters, regenerated per run)
+backend/monitoring/uptime_state.json
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local-only, not for GitHub
+PROJECT_NOTES.md
+SESSION_*.md
+
+# Local SQLite test databases (e.g. DATABASE_URL=sqlite:///./db.sqlite3
+# during manual/local testing) — never meant to be committed.
+*.sqlite3
+*.sqlite3-journal
+
+.aider*

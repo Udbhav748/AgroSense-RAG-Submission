@@ -1,0 +1,21 @@
+# Reverse proxy for the EC2 deployment, used only once a real domain points
+# at the instance's (Elastic) IP — see docker-compose.caddy.yml and
+# docs/OPERATIONS.md's "Deploying to EC2" section for the full setup.
+#
+# Replace the placeholder hostname below with your real domain before
+# starting the caddy service. Caddy requests a Let's Encrypt certificate
+# automatically for any address that resolves as a public DNS name; it
+# skips TLS (plain HTTP) automatically for a bare IP or "localhost", so
+# this file doesn't need a separate no-domain variant — it degrades on its
+# own if you start it before DNS is ready, it just won't have HTTPS yet.
+#
+# One hostname, not two: everything routes to the frontend container,
+# which proxies /api/* to the backend internally (frontend/nginx.conf) —
+# the browser only ever talks to this one origin. Matches
+# VITE_API_BASE_URL's default (unset → same-origin '/api', see
+# docker-compose.yml's frontend build args), so no separate api.*
+# subdomain, DNS record, or certificate is needed.
+
+example.com {
+    reverse_proxy frontend:80
+}

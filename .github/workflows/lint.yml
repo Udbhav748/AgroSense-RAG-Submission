@@ -1,0 +1,47 @@
+name: Lint & Type Check
+
+# Static analysis gate: mypy --strict on the backend's production surface
+# and ruff (lint + format) — Feature #2 of the 10/10 upgrade. Runs on every
+# push/PR so type/import/style regressions fail fast at the merge boundary
+# instead of surfacing in the test job (which runs after this) or, worse,
+# in production. Frontend is handled by the separate frontend-tests job in
+# ci.yml (npm run lint / npm test / npm run build) rather than here.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # Settings() requires non-empty values; dummy keys never make a real
+      # call in lint/type-checking (no tests run here).
+      GEMINI_API_KEY: ci-test-key
+      API_KEY: ci-test-key
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend requirements
+        run: pip install -r requirements.txt
+
+      - name: Install lint tools
+        run: pip install mypy ruff
+
+      - name: Type check (mypy --strict)
+        run: mypy app
+
+      - name: Lint (ruff check)
+        run: ruff check app
+
+      - name: Format check (ruff format --check)
+        run: ruff format --check app

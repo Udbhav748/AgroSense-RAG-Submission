@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0b0b0d" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)" />
+    <meta
+      name="description"
+      content="AgroSense-RAG — chat with your PDFs. Upload a document and ask questions grounded in your own content."
+    />
+    <title>AgroSense-RAG</title>
+    <style>
+      html.dark { background-color: #0b0b0d; }
+      html:not(.dark) { background-color: #f6f7fb; }
+    </style>
+    <script src="/theme-init.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Matches the in-app brand mark (components/ui/Logo.jsx: a folded-
+         corner document with a spark) on the accent-500 terracotta swatch
+         (tailwind.config.js) — previously a leftover indigo teardrop from
+         before the brand accent moved off the default blue/indigo. -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AgroSense Agronomy" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.svg" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23b8572d'/%3E%3Cg transform='translate(4,4)' fill='none' stroke='%23fff' stroke-width='1.5' stroke-linejoin='round'%3E%3Cpath d='M6 2.75h8.5L19 7.25V19.5a1.75 1.75 0 0 1-1.75 1.75H6A1.75 1.75 0 0 1 4.25 19.5V4.5A1.75 1.75 0 0 1 6 2.75z'/%3E%3Cpath d='M14.5 2.75V6.5a0.75 0.75 0 0 0 0.75 0.75H19'/%3E%3Cpath d='M12.5 10.5l1 2.2 2.2 1-2.2 1-1 2.2-1-2.2-2.2-1 2.2-1z' fill='%23fff' stroke='none'/%3E%3C/g%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

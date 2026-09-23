@@ -1,0 +1,29 @@
+# Optional third overlay, stacked on top of the other two once a domain is
+# pointed at the instance:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#     -f docker-compose.caddy.yml up -d --build
+#
+# Edit Caddyfile's two placeholder hostnames to your real subdomains first,
+# and open 80/443 (not 8000/8080) in the instance's security group instead.
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certs/account state persisted across restarts — without this,
+      # every container recreation would re-request certificates from
+      # Let's Encrypt, and its rate limits (5 duplicate certs/week per
+      # domain) are easy to hit by accident during setup.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  caddy_data:
+  caddy_config:

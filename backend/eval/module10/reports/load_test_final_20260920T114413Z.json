@@ -1,0 +1,148 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-20T11:44:12.973974+00:00",
+    "git_commit": "636fae8",
+    "dataset_version": "load_test_v1",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": null,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": false,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 185
+  },
+  "scope": "LOCAL, single-process capacity test only. LLM/embedding calls are mocked (no live provider call, no API quota consumed) -- this measures THIS APPLICATION's own request-handling overhead (FastAPI routing, the agent graph, FAISS-backed retrieval against a 1-chunk in-memory index) under concurrent load on whatever machine runs this script, NOT production/cloud-scale capacity, and NOT real LLM-provider-inclusive latency. Never extrapolated to 1M users -- see docs/DESIGN_REVIEW.md's own honest scaling answer for that.",
+  "concurrency_levels": [
+    {
+      "concurrency": 10,
+      "wall_time_seconds": 12.2138,
+      "requests_per_second": 0.82,
+      "error_rate": 0.0,
+      "error_codes": {},
+      "latency_seconds": {
+        "p50": 11.9466,
+        "p95": 12.2069,
+        "p99": 12.2069,
+        "mean": 11.8347
+      },
+      "resource_before": {
+        "cpu_percent": 0.0,
+        "memory_rss_mb": 527.8,
+        "available": true
+      },
+      "resource_after": {
+        "cpu_percent": 0.0,
+        "memory_rss_mb": 1026.15,
+        "available": true
+      }
+    },
+    {
+      "concurrency": 25,
+      "wall_time_seconds": 3.0863,
+      "requests_per_second": 8.1,
+      "error_rate": 0.0,
+      "error_codes": {},
+      "latency_seconds": {
+        "p50": 2.0068,
+        "p95": 2.9282,
+        "p99": 3.02,
+        "mean": 2.1387
+      },
+      "resource_before": {
+        "cpu_percent": 0.0,
+        "memory_rss_mb": 1026.15,
+        "available": true
+      },
+      "resource_after": {
+        "cpu_percent": 170.9,
+        "memory_rss_mb": 1047.09,
+        "available": true
+      }
+    },
+    {
+      "concurrency": 50,
+      "wall_time_seconds": 6.56,
+      "requests_per_second": 7.62,
+      "error_rate": 0.5,
+      "error_codes": {
+        "RATE_LIMIT_EXCEEDED": 25
+      },
+      "latency_seconds": {
+        "p50": 5.1696,
+        "p95": 6.1655,
+        "p99": 6.5282,
+        "mean": 4.9198
+      },
+      "resource_before": {
+        "cpu_percent": 62.4,
+        "memory_rss_mb": 1047.09,
+        "available": true
+      },
+      "resource_after": {
+        "cpu_percent": 0.0,
+        "memory_rss_mb": 1052.95,
+        "available": true
+      }
+    },
+    {
+      "concurrency": 100,
+      "wall_time_seconds": 3.0331,
+      "requests_per_second": 32.97,
+      "error_rate": 1.0,
+      "error_codes": {
+        "RATE_LIMIT_EXCEEDED": 100
+      },
+      "latency_seconds": {
+        "p50": 2.769,
+        "p95": 2.8978,
+        "p99": 2.9134,
+        "mean": 2.5658
+      },
+      "resource_before": {
+        "cpu_percent": 0.0,
+        "memory_rss_mb": 1052.95,
+        "available": true
+      },
+      "resource_after": {
+        "cpu_percent": 0.0,
+        "memory_rss_mb": 1059.14,
+        "available": true
+      }
+    }
+  ],
+  "analysis": {
+    "p95_latency_trend_seconds": [
+      12.2069,
+      2.9282,
+      6.1655,
+      2.8978
+    ],
+    "error_rate_trend": [
+      0.0,
+      0.0,
+      0.5,
+      1.0
+    ],
+    "concurrency_where_p95_jumps_50pct_or_more": 50,
+    "concurrency_where_errors_first_appear": 50,
+    "error_codes_at_first_failure_level": {
+      "RATE_LIMIT_EXCEEDED": 25
+    },
+    "first_bottleneck": "Errors first appear at concurrency=50 (error codes observed: {'RATE_LIMIT_EXCEEDED': 25}). This project's own in-memory sliding-window rate limiter (60 req/min per identity, app/core/auth.py) is the most likely cause -- every request in this test shares one API key, so >60 concurrent requests within the same minute genuinely trips the app's own real rate-limit code path, not a mocking artifact or an LLM-provider limit (both are mocked out of this test). This is a REAL, measured local bottleneck: the application's own per-identity rate limiter, triggered exactly as designed."
+  },
+  "limitations": [
+    "Single machine, single run, mocked LLM/embedding -- not a production-representative load test. Real production load would be bottlenecked by the LLM provider's rate limits long before this application's own concurrency handling, based on this project's own live-run history (two prior Groq daily-quota exhaustions).",
+    "psutil CPU/memory sampling is best-effort; if psutil isn't installed, resource fields are reported as unavailable, never estimated.",
+    "Does not test sustained load over time, only four discrete concurrency bursts."
+  ]
+}

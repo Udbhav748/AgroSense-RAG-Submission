@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "git_commit": "99ec1018e8250cbe3a0c83eae7d57ae7472d2c23",
+    "timestamp": "20260920T185450Z",
+    "command": "pytest backend/tests/test_postgres_session_store_encryption.py -q",
+    "scope": "AES-256-GCM encryption-at-rest, wired into app/services/postgres_session_store.py::ChatTurn.content -- the actual text of every stored user query/assistant answer."
+  },
+  "sensitive_data_identified": [
+    {
+      "field": "ChatTurn.content (chat_turns.content column)",
+      "why_sensitive": "Raw text of every user query and assistant answer ever sent through the app -- can contain anything a user typed while chatting about their uploaded documents.",
+      "status": "ENCRYPTED (this pass)"
+    },
+    {
+      "field": "ChatSession.title",
+      "why_sensitive": "Documented as 'populated from the first user turn (truncated)' -- would be sensitive if populated, but no code path that writes it was found in this pass.",
+      "status": "NOT ENCRYPTED -- not currently populated by any code path found; out of scope until it's actually used."
+    },
+    {
+      "field": "Uploaded document files (backend/uploads/), FAISS index/metadata",
+      "why_sensitive": "Full document contents.",
+      "status": "NOT ENCRYPTED -- explicitly out of scope for this pass (see app/core/encryption.py's own module docstring): wiring encryption here requires a migration story and touches PyMuPDF/OCR/S3-sync, all of which read the raw file directly."
+    }
+  ],
+  "integration_boundary": {
+    "write_path": "plaintext content (str) -> _encrypt_content() [AES-256-GCM, session_id bound as associated data] -> 'enc1:' + base64(ciphertext) persisted as ChatTurn.content (Text column, no schema change)",
+    "read_path": "ChatTurn.content read -> _decrypt_content() [checks 'enc1:' prefix; legacy plaintext rows without it are returned as-is] -> plaintext returned to the application"
+  },
+  "key_management": {
+    "mechanism": "Settings.encryption_key_b64 (app/core/config.py), loaded from ENCRYPTION_KEY_B64 in backend/.env via pydantic-settings -- the same mechanism every other config value in this app uses.",
+    "real_bug_found_and_fixed_this_pass": "app.core.encryption's own _load_key() reads raw os.environ by default, but this codebase's .env is parsed by pydantic-settings and never exported to the process environment -- so a value set only in .env was silently invisible to any caller relying on the os.environ fallback. Fixed by having postgres_session_store.py pass key_b64=settings.encryption_key_b64 explicitly on every call, confirmed by 6 existing DB-backed tests (test_agent_graph_stream.py, test_vision_diagnose.py, test_weather_service.py) that started failing with EncryptionKeyMissingError before this fix and pass cleanly after it.",
+    "never_hardcoded": true,
+    "never_committed": "backend/.env is untracked (confirmed: git log --all -- backend/.env is empty); backend/.env.example documents the variable with an empty placeholder value."
+  },
+  "existing_plaintext_record_strategy": "BACKWARD-COMPATIBLE READ, NO FORCED MIGRATION: a stored value without the 'enc1:' prefix is treated as a legacy plaintext row and returned as-is by _decrypt_content -- it remains readable without any migration step. Every NEW write is unconditionally encrypted (there is no code path that writes plaintext once a key is configured; if the key is missing, the write fails closed instead of falling back to plaintext). Verified by tests/test_postgres_session_store_encryption.py::TestBackwardCompatibilityWithLegacyPlaintextRows (2 tests).",
+  "concrete_demonstration": {
+    "application_value": "What does the document say about [REDACTED SENSITIVE EXAMPLE]?",
+    "raw_persisted_value": "enc1:rfU5Y6//r7IY7J0gSe+P/VrB5tPB1dtL7YWvf93E/pCbHRQ24F/0lZUFSvBZeZqwy/Np9zZVfux4UHHBuEHa28el0tcZLOG/KUjBlcHwA3cR/szhS45q4O/F",
+    "raw_persisted_value_length": 125,
+    "plaintext_substring_present_in_raw_storage": false,
+    "decrypted_via_normal_read_path": "What does the document say about [REDACTED SENSITIVE EXAMPLE]?",
+    "decrypted_matches_original": true
+  },
+  "measured_results": {
+    "n_encryption_storage_test_cases": 12,
+    "successful_encrypted_writes": "12/12 test cases exercising append_turn succeeded as expected (including the 1 case that correctly failed closed on a missing key)",
+    "successful_decrypts": "verified in TestDecryptRoundTrip (2/2) and TestNormalFlowStillWorksWithEncryptionEnabled (1/1)",
+    "tamper_detection_rate": "1/1 (100%) -- TestTamperedCiphertext::test_tampered_content_fails_to_decrypt raises EncryptionIntegrityError as expected",
+    "wrong_key_rejection_rate": "2/2 (100%) -- TestWrongKey and the session-isolation cross-AAD case both correctly raise EncryptionIntegrityError",
+    "missing_key_fail_closed_rate": "2/2 (100%) -- both write-without-key and read-without-key correctly raise EncryptionKeyMissingError, no plaintext ever persisted or returned",
+    "plaintext_at_rest_leakage_count": 0,
+    "test_file": "backend/tests/test_postgres_session_store_encryption.py",
+    "test_result": "12/12 passed"
+  },
+  "expected_security_outcomes": [
+    "A database dump/backup of chat_turns.content never exposes chat content in plaintext for any row written after this pass.",
+    "A stolen encryption key alone is insufficient to decrypt a different session's content if presented with the wrong session_id as associated data (defense in depth beyond the existing session_id/tenant_id ownership checks).",
+    "A tampered or corrupted ciphertext row is detected and raises, never silently returns garbage or partial data.",
+    "The application never silently degrades to storing plaintext when the key is missing -- it fails the write/read instead."
+  ],
+  "remaining_limitations": [
+    "Only ChatTurn.content is encrypted -- uploaded document files, FAISS index/metadata, and ChatSession.title (currently unpopulated) are not, and are explicitly disclosed as out of scope for this pass.",
+    "This is APPLICATION-LEVEL encryption, not PLATFORM-LEVEL (e.g. an encrypted EBS volume) -- see docs/CHECKLIST.md's Encryption row for that distinction, unchanged by this pass.",
+    "No key-rotation procedure is implemented -- rotating ENCRYPTION_KEY_B64 would make all previously-encrypted rows undecryptable (a real, disclosed operational gap, not solved here).",
+    "This does NOT constitute GDPR/HIPAA compliance by itself -- it is one control among many such a certification would require."
+  ]
+}

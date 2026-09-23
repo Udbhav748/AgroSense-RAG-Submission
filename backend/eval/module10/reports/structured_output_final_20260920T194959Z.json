@@ -1,0 +1,284 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-20T19:49:58.956918+00:00",
+    "git_commit": "ae51ddc",
+    "dataset_version": "structured_output_v1",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": "gemini",
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": true,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 17,
+    "evaluator": "eval/module10/runners/run_structured_output_eval.py",
+    "target": "app.services.structured_output.parse_structured_answer"
+  },
+  "methodology": "Offline, deterministic evaluation of the parser/validator against a fixed set of raw provider-output strings covering valid JSON, fenced JSON, malformed JSON, missing/wrong-type/empty required fields, extra fields, and simulated provider failures. Does NOT evaluate live generation quality -- only whether the parser correctly accepts well-formed output and correctly rejects (degrades to None, never raises, never silently accepts) malformed output. 'Schema Compliance Rate' = fraction of cases whose raw output actually parses into a valid StructuredAnswer, regardless of whether that was the intended outcome for the case. 'Parser correctness rate' = fraction of cases where the parser's accept/reject decision matched the case's own expect_success label -- the more meaningful pass/fail number for a malformed-input test suite, since correctly REJECTING a malformed case is success, not failure. 'Validation Success Rate' = fraction of cases whose output actually passed Pydantic validation (identical population to schema_compliance_rate here, since this dataset's only validation step is parse_structured_answer's own StructuredAnswer.model_validate call). 'Fallback cases' = cases where parsing/validation failed and the production path (ChatService._generate_structured) would degrade to plain free-text generation. 'Malformed-output cases' = cases whose raw fixture is intentionally invalid input (a fixture property, fully expected and correctly handled -- not a defect). 'Unrecoverable cases' = cases intended to succeed (expect_success=True) that the parser nonetheless rejected -- a genuine, real failure if any exist (0 in this dataset).",
+  "schema_compliance_rate": 0.4118,
+  "field_accuracy": 1.0,
+  "parser_correctness_rate": 1.0,
+  "validation_success_rate": 0.4118,
+  "n_cases": 17,
+  "n_schema_compliant": 7,
+  "n_field_checks": 14,
+  "n_correct_field_checks": 14,
+  "n_fallback_cases": 10,
+  "n_malformed_output_cases": 10,
+  "n_unrecoverable_cases": 0,
+  "outcome_breakdown": {
+    "provider_produced_valid_structured_output": 7,
+    "successfully_repaired_or_recovered_output": 0,
+    "fallback_output": 10,
+    "failed_unstructured_output": 0
+  },
+  "limitations": [
+    "This dataset tests the parser in isolation with hand-authored raw strings, not live LLM output -- it does not measure how often a real provider actually emits malformed JSON in production (that would require live generation calls against structured_response=True requests, not attempted in this pass to conserve API quota; TASK 7's endpoint-integration test below covers the request-to-response wiring instead, with a fake LLM client standing in for the real provider).",
+    "StructuredAnswer.answer has no min_length constraint, so an empty-string answer passes schema validation (case so_010) -- a genuine, disclosed schema looseness. Not fixed here since parse_structured_answer's own logic already treats a falsy answer as a parse failure, which is the layer that actually matters for production behavior.",
+    "17 cases is a fixed, hand-authored set covering the documented failure modes in structured_output.py's own docstring/tests, not an exhaustive fuzz test.",
+    "'successfully_repaired_or_recovered_output' is always 0: this parser has no repair/retry step (e.g. asking the provider to reformat) -- a malformed output either parses as-is or degrades straight to the free-text fallback. Disclosed as a real limitation, not fabricated as a measured 'recovery rate' this codebase doesn't implement."
+  ],
+  "per_case": [
+    {
+      "case_id": "so_001",
+      "category": "valid",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "outcome": "valid_structured",
+      "is_malformed_fixture": false,
+      "is_unrecoverable": false,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      },
+      "validation_passed": true
+    },
+    {
+      "case_id": "so_002",
+      "category": "valid_optional_field_omitted",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "outcome": "valid_structured",
+      "is_malformed_fixture": false,
+      "is_unrecoverable": false,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      },
+      "validation_passed": true
+    },
+    {
+      "case_id": "so_003",
+      "category": "fenced_json",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "outcome": "valid_structured",
+      "is_malformed_fixture": false,
+      "is_unrecoverable": false,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      },
+      "validation_passed": true
+    },
+    {
+      "case_id": "so_004",
+      "category": "fenced_json_no_language_tag",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "outcome": "valid_structured",
+      "is_malformed_fixture": false,
+      "is_unrecoverable": false,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      },
+      "validation_passed": true
+    },
+    {
+      "case_id": "so_005",
+      "category": "json_with_trailing_prose",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "outcome": "valid_structured",
+      "is_malformed_fixture": false,
+      "is_unrecoverable": false,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      },
+      "validation_passed": true
+    },
+    {
+      "case_id": "so_006",
+      "category": "malformed_json",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "outcome": "fallback",
+      "is_malformed_fixture": true,
+      "is_unrecoverable": false,
+      "note": null,
+      "validation_passed": false
+    },
+    {
+      "case_id": "so_007",
+      "category": "missing_required_field",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "outcome": "fallback",
+      "is_malformed_fixture": true,
+      "is_unrecoverable": false,
+      "note": null,
+      "validation_passed": false
+    },
+    {
+      "case_id": "so_008",
+      "category": "wrong_type_answer_is_number",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "outcome": "fallback",
+      "is_malformed_fixture": true,
+      "is_unrecoverable": false,
+      "note": null,
+      "validation_passed": false
+    },
+    {
+      "case_id": "so_009",
+      "category": "wrong_type_sources_is_string",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "outcome": "fallback",
+      "is_malformed_fixture": true,
+      "is_unrecoverable": false,
+      "note": null,
+      "validation_passed": false
+    },
+    {
+      "case_id": "so_010",
+      "category": "empty_required_field",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "outcome": "fallback",
+      "is_malformed_fixture": true,
+      "is_unrecoverable": false,
+      "note": "parse_structured_answer rejects an empty answer even though StructuredAnswer's Pydantic schema alone (no min_length) would technically allow it -- a stricter, safer behavior than the bare schema guarantees.",
+      "validation_passed": false
+    },
+    {
+      "case_id": "so_011",
+      "category": "extra_field",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "outcome": "valid_structured",
+      "is_malformed_fixture": false,
+      "is_unrecoverable": false,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      },
+      "validation_passed": true
+    },
+    {
+      "case_id": "so_012",
+      "category": "provider_failure_empty_response",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "outcome": "fallback",
+      "is_malformed_fixture": true,
+      "is_unrecoverable": false,
+      "note": null,
+      "validation_passed": false
+    },
+    {
+      "case_id": "so_013",
+      "category": "provider_failure_whitespace_only",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "outcome": "fallback",
+      "is_malformed_fixture": true,
+      "is_unrecoverable": false,
+      "note": null,
+      "validation_passed": false
+    },
+    {
+      "case_id": "so_014",
+      "category": "non_json_prose_only",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "outcome": "fallback",
+      "is_malformed_fixture": true,
+      "is_unrecoverable": false,
+      "note": null,
+      "validation_passed": false
+    },
+    {
+      "case_id": "so_015",
+      "category": "fence_with_only_whitespace_inside",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "outcome": "fallback",
+      "is_malformed_fixture": true,
+      "is_unrecoverable": false,
+      "note": null,
+      "validation_passed": false
+    },
+    {
+      "case_id": "so_016",
+      "category": "nested_type_error_sources_contains_non_string",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "outcome": "fallback",
+      "is_malformed_fixture": true,
+      "is_unrecoverable": false,
+      "note": null,
+      "validation_passed": false
+    },
+    {
+      "case_id": "so_017",
+      "category": "valid_multiple_sources",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "outcome": "valid_structured",
+      "is_malformed_fixture": false,
+      "is_unrecoverable": false,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      },
+      "validation_passed": true
+    }
+  ]
+}

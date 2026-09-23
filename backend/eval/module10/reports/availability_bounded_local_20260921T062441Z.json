@@ -1,0 +1,121 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-21T06:24:40.959180+00:00",
+    "git_commit": "b279db9",
+    "dataset_version": "availability_v1",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": "gemini",
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": true,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 15
+  },
+  "label": "bounded local service availability measurement",
+  "methodology": "A real `uvicorn app.main:app` subprocess is started on localhost, then GET /health is probed repeatedly over a bounded local wall-clock window using the same monitoring.uptime_check._probe() function the real uptime checker uses. Availability = successful probes / total probes. This is NOT production availability -- there is no persistent production deployment for this project -- and this short window is a smoke/validation measurement, not an SLO.",
+  "started": true,
+  "endpoint_tested": "http://127.0.0.1:8813/health",
+  "total_probes": 15,
+  "successful_probes": 15,
+  "failed_probes": 0,
+  "availability": 1.0,
+  "test_duration_seconds": 15.0,
+  "probe_interval_seconds": 1.0,
+  "latency_ms": {
+    "mean": 50.36,
+    "min": 13.02,
+    "max": 145.21
+  },
+  "per_probe": [
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 57.76
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 145.21
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 38.09
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 48.52
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 22.58
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 54.53
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 38.98
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 13.02
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 48.98
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 43.62
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 63.49
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 20.55
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 31.19
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 112.01
+    },
+    {
+      "healthy": true,
+      "status_code": 200,
+      "latency_ms": 16.88
+    }
+  ],
+  "limitations": [
+    "Single machine, single short local run -- not a distributed or long-running SLO measurement.",
+    "Measures only the health endpoint's reachability/latency, not full request-path availability under real traffic (see the observability report's error_rate for that).",
+    "The uvicorn process, OS, and network stack are all local to this machine -- results do not generalize to a real hosted deployment's availability characteristics."
+  ]
+}

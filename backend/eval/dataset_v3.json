@@ -1,0 +1,58 @@
+[
+  {
+    "query": "Looking at the figure in the document, what does the bar chart show happening to quarterly revenue across the four quarters?",
+    "expected_action": "retrieve",
+    "expected_keywords": [
+      "quarterly revenue",
+      "Q1",
+      "Q4"
+    ],
+    "expected_chunk_keywords": [
+      "bar chart",
+      "quarterly revenue",
+      "Q1",
+      "Q4"
+    ],
+    "case_type": "image_caption"
+  },
+  {
+    "query": "According to the table, what is the 2023 revenue figure for the North region?",
+    "expected_action": "retrieve",
+    "expected_keywords": [
+      "12.4",
+      "12.5",
+      "million"
+    ],
+    "expected_chunk_keywords": [
+      "North",
+      "2023",
+      "Revenue"
+    ],
+    "case_type": "table_lookup"
+  },
+  {
+    "query": "Based on the scanned page of the report, what is the plant species shown in the figure and which disease does it exhibit?",
+    "expected_action": "retrieve",
+    "expected_keywords": [
+      "leaf",
+      "spot"
+    ],
+    "expected_chunk_keywords": [
+      "disease",
+      "leaf spot"
+    ],
+    "case_type": "vision_qa"
+  },
+  {
+    "query": "This document's appendix contains a column chart labeled 'Q4 growth by segment'. What is the tallest segment's label in that chart?",
+    "expected_action": "retrieve",
+    "expected_keywords": [
+      "segment"
+    ],
+    "expected_chunk_keywords": [
+      "column chart",
+      "segment"
+    ],
+    "case_type": "image_caption"
+  }
+]

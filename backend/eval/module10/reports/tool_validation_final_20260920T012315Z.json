@@ -1,0 +1,276 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-20T01:23:15.351058+00:00",
+    "git_commit": "d3332c1",
+    "dataset_version": "tool_validation_v1",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": null,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": false,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 21,
+    "evaluator": "eval/module10/runners/run_tool_validation_eval.py",
+    "target": "app.services.tool_registry.TOOL_SCHEMAS (the real, production input schemas track_tool validates against)"
+  },
+  "methodology": "Offline, deterministic: calls each real tool's actual production Pydantic input schema (TOOL_SCHEMAS[tool]['input'].model_validate(args)) -- the exact validation track_tool's decorator performs before a tool function runs -- with hand-authored valid and invalid argument sets covering all 4 registered tools (retrieval, summarization, web_search, diagnose), not just the 2 tools prior passes had strong coverage for. Does not invoke the tools' actual implementations (no live vector store/web/LeafSense call) -- this measures argument-schema correctness, not end-to-end tool execution success.",
+  "tool_inventory": {
+    "retrieval": {
+      "description": "Vector search over the uploaded PDFs' embedded chunks; returns the top-k passages most relevant to the query.",
+      "input_fields": [
+        "query",
+        "top_k",
+        "min_score"
+      ]
+    },
+    "summarization": {
+      "description": "Whole-document summary built from every chunk belonging to one uploaded document.",
+      "input_fields": [
+        "document_id"
+      ]
+    },
+    "web_search": {
+      "description": "DuckDuckGo web search fallback for queries the uploaded corpus can't answer (opt-in, human-approval gated).",
+      "input_fields": [
+        "query",
+        "max_results"
+      ]
+    },
+    "diagnose": {
+      "description": "LeafSense HTTP vision integration: classifies a crop-leaf image into a disease class, mapped to a plain-language crop/disease/confidence.",
+      "input_fields": [
+        "contents",
+        "filename",
+        "content_type",
+        "query"
+      ]
+    }
+  },
+  "argument_accuracy": 1.0,
+  "n_cases": 21,
+  "n_correct": 21,
+  "per_tool_accuracy": {
+    "retrieval": {
+      "n_cases": 7,
+      "accuracy": 1.0
+    },
+    "summarization": {
+      "n_cases": 4,
+      "accuracy": 1.0
+    },
+    "web_search": {
+      "n_cases": 5,
+      "accuracy": 1.0
+    },
+    "diagnose": {
+      "n_cases": 5,
+      "accuracy": 1.0
+    }
+  },
+  "limitations": [
+    "Tool Success Rate / Retry Success Rate / Timeout Rate are NOT measured by this evaluator -- those require exercising track_tool's decorator around a live or mocked tool CALL (success/failure/timeout paths), not just schema validation of arguments. Not attempted in this pass.",
+    "Output-schema validation (the _OUTPUT_ADAPTERS half of track_tool) is not exercised here either -- that requires a real or mocked tool return value, not just input arguments.",
+    "21 hand-authored cases across 4 tools, not an exhaustive fuzz test."
+  ],
+  "per_case": [
+    {
+      "case_id": "tv_retrieval_001",
+      "tool": "retrieval",
+      "category": "valid",
+      "expect_valid": true,
+      "actual_valid": true,
+      "case_passed": true,
+      "error": null
+    },
+    {
+      "case_id": "tv_retrieval_002",
+      "tool": "retrieval",
+      "category": "valid_with_optional",
+      "expect_valid": true,
+      "actual_valid": true,
+      "case_passed": true,
+      "error": null
+    },
+    {
+      "case_id": "tv_retrieval_003",
+      "tool": "retrieval",
+      "category": "missing_required",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for RetrievalInput"
+    },
+    {
+      "case_id": "tv_retrieval_004",
+      "tool": "retrieval",
+      "category": "empty_required_string",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for RetrievalInput"
+    },
+    {
+      "case_id": "tv_retrieval_005",
+      "tool": "retrieval",
+      "category": "wrong_type",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for RetrievalInput"
+    },
+    {
+      "case_id": "tv_retrieval_006",
+      "tool": "retrieval",
+      "category": "boundary_top_k_zero",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for RetrievalInput"
+    },
+    {
+      "case_id": "tv_retrieval_007",
+      "tool": "retrieval",
+      "category": "boundary_min_score_out_of_range",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for RetrievalInput"
+    },
+    {
+      "case_id": "tv_summarization_001",
+      "tool": "summarization",
+      "category": "valid",
+      "expect_valid": true,
+      "actual_valid": true,
+      "case_passed": true,
+      "error": null
+    },
+    {
+      "case_id": "tv_summarization_002",
+      "tool": "summarization",
+      "category": "missing_required",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for SummarizationInput"
+    },
+    {
+      "case_id": "tv_summarization_003",
+      "tool": "summarization",
+      "category": "empty_required_string",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for SummarizationInput"
+    },
+    {
+      "case_id": "tv_summarization_004",
+      "tool": "summarization",
+      "category": "wrong_type",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for SummarizationInput"
+    },
+    {
+      "case_id": "tv_web_search_001",
+      "tool": "web_search",
+      "category": "valid",
+      "expect_valid": true,
+      "actual_valid": true,
+      "case_passed": true,
+      "error": null
+    },
+    {
+      "case_id": "tv_web_search_002",
+      "tool": "web_search",
+      "category": "valid_with_optional",
+      "expect_valid": true,
+      "actual_valid": true,
+      "case_passed": true,
+      "error": null
+    },
+    {
+      "case_id": "tv_web_search_003",
+      "tool": "web_search",
+      "category": "missing_required",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for WebSearchInput"
+    },
+    {
+      "case_id": "tv_web_search_004",
+      "tool": "web_search",
+      "category": "boundary_max_results_zero",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for WebSearchInput"
+    },
+    {
+      "case_id": "tv_web_search_005",
+      "tool": "web_search",
+      "category": "wrong_type",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for WebSearchInput"
+    },
+    {
+      "case_id": "tv_diagnose_001",
+      "tool": "diagnose",
+      "category": "valid",
+      "expect_valid": true,
+      "actual_valid": true,
+      "case_passed": true,
+      "error": null
+    },
+    {
+      "case_id": "tv_diagnose_002",
+      "tool": "diagnose",
+      "category": "valid_with_optional_query",
+      "expect_valid": true,
+      "actual_valid": true,
+      "case_passed": true,
+      "error": null
+    },
+    {
+      "case_id": "tv_diagnose_003",
+      "tool": "diagnose",
+      "category": "missing_required_contents",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for DiagnoseInput"
+    },
+    {
+      "case_id": "tv_diagnose_004",
+      "tool": "diagnose",
+      "category": "empty_filename",
+      "expect_valid": false,
+      "actual_valid": false,
+      "case_passed": true,
+      "error": "1 validation error for DiagnoseInput"
+    },
+    {
+      "case_id": "tv_diagnose_005",
+      "tool": "diagnose",
+      "category": "wrong_type_contents_is_string",
+      "expect_valid": true,
+      "actual_valid": true,
+      "case_passed": true,
+      "error": null
+    }
+  ]
+}

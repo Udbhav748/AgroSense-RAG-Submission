@@ -1,0 +1,18 @@
+# Normalize all text files to LF in the repository and on checkout.
+# (Working tree files that were saved with CRLF are renormalized by git,
+#  so EOL-only differences never show up as diffs.)
+* text=auto eol=lf
+
+# Binary files — never apply text normalization.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.faiss binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.pyc binary

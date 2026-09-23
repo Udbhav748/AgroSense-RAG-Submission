@@ -1,0 +1,125 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-19T16:57:41.624967+00:00",
+    "git_commit": "d73475e",
+    "dataset_version": "human_eval_rows_17_19",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": null,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": false,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 2,
+    "prompt_version": "v2",
+    "llm_provider": "groq",
+    "groq_model_name": "openai/gpt-oss-120b",
+    "retrieval_config": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "retrieval_top_k": 5,
+      "retrieval_grade_threshold": 0.5
+    }
+  },
+  "scope_note": "LIMITED SCOPE, STATED HONESTLY: only the 2 previously-failing human-eval cases (rows 17, 19) were re-run live in this pass, to conserve the Groq daily token quota after it was fully exhausted once already during Phase 3's investigation. This is NOT a full 20-case RAG benchmark or 24-case human-evaluation re-run, and the result below must not be extrapolated as the new full-dataset Faithfulness score.",
+  "pre_fix_reference": "Both cases previously returned FALLBACK_REPLY ('I couldn't find that information in the uploaded documents.') despite retrieval confirmed correct -- see docs/PHASE3_PRODUCTION_HARDENING_REPORT.md Section D and docs/HUMAN_EVAL.md rows 17/19.",
+  "summary": {
+    "n_cases": 2,
+    "n_real_answers_post_fix": 2,
+    "n_generation_error_replies": 0,
+    "n_fallback_not_in_documents": 0
+  },
+  "per_case": [
+    {
+      "row": 17,
+      "case_id": "faithfulness_post_phase3_row17",
+      "case_type": "hard/ambiguous",
+      "note": "Retrieval previously confirmed excellent (5 apple-scab-specific chunks, including exact dosage/active-ingredient text) via prompt capture in Phase 3's investigation. Pre-fix behavior: FALLBACK_REPLY ('I couldn't find that information...') despite the answer being present in context -- the core regression symptom.",
+      "query": "What's the treatment for scab?",
+      "retrieved_chunk_count": 5,
+      "retrieval_confidence": "good",
+      "sources": [
+        {
+          "document_id": "0a4c3ce6-9439-405d-a244-ce71ea0af149",
+          "excerpt": "Apple & Crabapple Disease Management\nCovers: Apple Scab, Cedar-Apple Rust, Black Rot (Frogeye Leaf Spot), Fire Blight, Powdery Mildew\nCompiled from public university cooperative extension publications"
+        },
+        {
+          "document_id": "7bdf53a0-1bbd-4f50-a230-4be98530ea1e",
+          "excerpt": "Apple & Crabapple Disease Management\nCovers: Apple Scab, Cedar-Apple Rust, Black Rot (Frogeye Leaf Spot), Fire Blight, Powdery Mildew\nCompiled from public university cooperative extension publications"
+        },
+        {
+          "document_id": "b8dceca3-6c80-5fb5-a8ee-9f7ae6eb734a",
+          "excerpt": "Agricultural Treatment & Dosage Reference: Apple - Apple Scab\nCrop: apple | Disease: apple scab | Pathogen Type: Fungal | Organic Remedy: Sulfur 80% WDG / Potassium bicarbonate / Bacillus subtilis | C"
+        },
+        {
+          "document_id": "b8dceca3-6c80-5fb5-a8ee-9f7ae6eb734a",
+          "excerpt": "Agricultural Treatment & Dosage Reference: Apple - Apple Scab\nCrop: apple | Disease: apple scab | Pathogen Type: Fungal | Organic Remedy: Sulfur 80% WDG / Potassium bicarbonate / Bacillus subtilis | C"
+        },
+        {
+          "document_id": "7d3b0f3c-9e70-5bfe-bfeb-154ad53ca6d4",
+          "excerpt": "# Comprehensive Diagnostic & Management Guide: Apple Scab\n\n## 1. Pathogen Overview & Etiology\n- **Crop**: Apple (*Malus domestica*) & Crabapple (*Malus* spp.)\n- **Disease**: Apple Scab\n- **Causal Path"
+        }
+      ],
+      "answer": "Treat apple scab by combining cultural controls with fungicide applications.  \nPlant scab\u2011resistant cultivars such as\u202f\u2018Goldrush\u2019, \u2018Enterprise\u2019, \u2018Pristine\u2019, \u2018Gala\u202fSupreme\u2019, \u2018Liberty\u2019, \u2018Freedom\u2019 or \u2018Jonafree\u2019, and clean up fallen leaves each season to reduce inoculum\u202f[1].  \n\nFor active infections, spray either an organic or a conventional product. Organic options include sulfur\u202f80\u202f%\u202fWDG, potassium bicarbonate, or the biocontrol\u202fBacillus\u202fsubtilis\u202f[3]. Conventional chemicals are Captan\u202f50\u202f%\u202fWP (2.5\u202fg per litre of spray mix) or Difenoconazole\u202f25\u202f%\u202fEC (0.5\u202fml per litre) applied at 7\u201310\u202fday intervals, with a 14\u2011day pre\u2011harvest interval and full PPE protection\u202f[3][4].",
+      "answer_classification": "real_generated_answer",
+      "is_real_answer": true,
+      "hallucination_detected": false,
+      "grounding_score": 0.6154,
+      "tool_used": "retrieval",
+      "steps_taken": 8,
+      "answer_source": "documents",
+      "latency_s": 127.1352,
+      "processing_time_reported_s": 127.1236
+    },
+    {
+      "row": 19,
+      "case_id": "faithfulness_post_phase3_row19",
+      "case_type": "hard/out_of_corpus (stale label -- see docs/HUMAN_EVAL.md row 19)",
+      "note": "Retrieval previously confirmed excellent (full HLB diagnostic guide + dosage reference) despite hard_cases.json's stale 'out of corpus' label. Pre-fix behavior: FALLBACK_REPLY despite on-topic retrieval.",
+      "query": "What is the treatment for citrus greening disease (HLB)?",
+      "retrieved_chunk_count": 5,
+      "retrieval_confidence": "good",
+      "sources": [
+        {
+          "document_id": "53fd1209-85be-58de-9a82-cd6c653bf652",
+          "excerpt": "# Comprehensive Diagnostic & Management Guide: Citrus Greening (Huanglongbing - HLB)\n\n## 1. Pathogen Overview & Vector Dynamics\n- **Crop**: Citrus species (Sweet Orange, Grapefruit, Mandarin, Lemon, L"
+        },
+        {
+          "document_id": "53fd1209-85be-58de-9a82-cd6c653bf652",
+          "excerpt": "# Comprehensive Diagnostic & Management Guide: Citrus Greening (Huanglongbing - HLB)\n\n## 1. Pathogen Overview & Vector Dynamics\n- **Crop**: Citrus species (Sweet Orange, Grapefruit, Mandarin, Lemon, L"
+        },
+        {
+          "document_id": "b8dceca3-6c80-5fb5-a8ee-9f7ae6eb734a",
+          "excerpt": "Agricultural Treatment & Dosage Reference: Orange - Citrus Greening (Huanglongbing)\nCrop: orange | Disease: citrus greening (huanglongbing) | Pathogen Type: Bacterial | Organic Remedy: Horticultural m"
+        },
+        {
+          "document_id": "b8dceca3-6c80-5fb5-a8ee-9f7ae6eb734a",
+          "excerpt": "Agricultural Treatment & Dosage Reference: Orange - Citrus Greening (Huanglongbing)\nCrop: orange | Disease: citrus greening (huanglongbing) | Pathogen Type: Bacterial | Organic Remedy: Horticultural m"
+        },
+        {
+          "document_id": "53fd1209-85be-58de-9a82-cd6c653bf652",
+          "excerpt": "## 3. Comprehensive HLB Control & Psyllid Vector Program\n\nBecause CLas resides inside the vascular phloem, foliar bactericides cannot eradicate it. Effective management requires a rigorous 3-pronged a"
+        }
+      ],
+      "answer": "The disease is managed by suppressing the Asian citrus psyllid and supporting tree nutrition.\u202fTypical programs use systemic neonicotinoids such as imidacloprid (17.8\u202f%\u202fSL) or thiamethoxam (25\u202f%\u202fWG) applied as a soil drench or foliar spray at 0.5\u202fml/L (imidacloprid) or 0.3\u202fg/L (thiamethoxam) on a 21\u201130\u2011day interval, combined with horticultural mineral oil (1\u20112\u202f%) and kaolin\u2011clay barriers to deter oviposition, and the release of the parasitoid\u202fTamarixia\u202fradiata\u202fas a biological control\u202f[3][4].\u202fAdditional vector\u2011control options include rotating foliar insecticides such as dimethoate, chlorpyrifos, zeta\u2011cypermethrin, bifenthrin or spirotetramat, and applying frequent foliar micronutrient sprays (Zn, Mn, Fe, etc.) to improve tree health\u202f[5].",
+      "answer_classification": "real_generated_answer",
+      "is_real_answer": true,
+      "hallucination_detected": false,
+      "grounding_score": 0.6567,
+      "tool_used": "retrieval",
+      "steps_taken": 8,
+      "answer_source": "documents",
+      "latency_s": 15.605,
+      "processing_time_reported_s": 15.6035
+    }
+  ]
+}

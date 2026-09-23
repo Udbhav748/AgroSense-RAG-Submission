@@ -1,0 +1,139 @@
+{
+  "timestamp": "2026-09-21T19:33:44.211959+00:00",
+  "git_commit": "ac777aa",
+  "dataset_version": "module10_v1",
+  "evaluation_version": "module10_eval_v1",
+  "python_version": "3.13.9",
+  "model_provider": "groq",
+  "model_name": "openai/gpt-oss-120b",
+  "fallback_llm_provider": "gemini",
+  "embedding_model": "all-MiniLM-L6-v2",
+  "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+  "configuration": {
+    "hybrid_search_enabled": true,
+    "reranking_enabled": false,
+    "web_search_enabled": false,
+    "vision_qa_enabled": false,
+    "structured_output_enabled": true,
+    "retrieval_grade_threshold": 0.5,
+    "top_k": 5
+  },
+  "sample_count": 11,
+  "evaluation_name": "encryption_at_rest_final",
+  "algorithm": "AES-256-GCM (cryptography.hazmat.primitives.ciphers.aead.AESGCM)",
+  "primitive_reference": "backend/app/core/encryption.py",
+  "shared_text_field_helpers": "encrypt_text_field/decrypt_text_field (app/core/encryption.py), used by both PostgresSessionStore (ChatTurn.content) and session_repository (ChatSession.title) -- no duplicated crypto logic across call sites.",
+  "key_source": "Settings.encryption_key_b64, read from ENCRYPTION_KEY_B64 in the environment/.env -- never hardcoded, never committed. Generated via `python -c \"from app.core.encryption import generate_key; print(generate_key())\"`.",
+  "nonce_strategy": "Fresh os.urandom(12) (96-bit) nonce per encryption call -- never reused.",
+  "aad_strategy": "session_id bound as associated data on both ChatTurn.content and ChatSession.title -- a ciphertext from one session cannot be decrypted under a different session_id, even with the correct key.",
+  "on_disk_format": "'enc1:' prefix + base64(nonce(12 bytes) + AESGCM ciphertext-with-tag). Unmarked values are treated as legacy plaintext, never mistaken for ciphertext.",
+  "backward_compatibility": "New writes are always encrypted. Existing unmarked (legacy plaintext) rows remain readable as-is -- no forced migration, no silent rewrite on read.",
+  "encryption_scope_expanded_this_pass": [
+    "ChatSession.title"
+  ],
+  "encryption_scope_preexisting": [
+    "ChatTurn.content"
+  ],
+  "coverage_matrix": [
+    {
+      "data_category": "ChatTurn.content (chat message text)",
+      "storage": "PostgreSQL, chat_turns.content",
+      "at_rest_protection": "AES-256-GCM (app.core.encryption)",
+      "status": "protected"
+    },
+    {
+      "data_category": "ChatSession.title (derived from first user message)",
+      "storage": "PostgreSQL, chat_sessions.title",
+      "at_rest_protection": "AES-256-GCM (app.core.encryption)",
+      "status": "protected"
+    },
+    {
+      "data_category": "Tenant/User/ApiKey metadata (slug, email, key_hash, role)",
+      "storage": "PostgreSQL",
+      "at_rest_protection": "not application-level encrypted",
+      "status": "unprotected_by_design",
+      "reason": "Not free-text user content; email is queried by unique index (equality lookup on login) which transparent field encryption would break without a deterministic/blind-index scheme not currently implemented; password/API-key are already one-way hashed, not reversible plaintext to begin with."
+    },
+    {
+      "data_category": "Uploaded document raw file (PDF bytes)",
+      "storage": "Local filesystem, settings.upload_dir_name, UUID filename",
+      "at_rest_protection": "not application-level encrypted",
+      "status": "unprotected_by_design",
+      "reason": "PyMuPDF (document_service.py) opens the file directly from disk by path for extraction; transparent encryption here requires a decrypt-to-tempfile-before-parsing step and a migration story for already-uploaded files -- a larger, riskier change explicitly deferred (see app/core/encryption.py's own module docstring, written at the time the primitive was first introduced)."
+    },
+    {
+      "data_category": "Extracted chunk text + metadata (FAISS metadata.json)",
+      "storage": "Local filesystem, vector_store/metadata.json",
+      "at_rest_protection": "not application-level encrypted",
+      "status": "unprotected_by_design",
+      "reason": "Read directly by retrieval/reranking/prompt-building code on every request; encrypting requires decrypting every chunk on every retrieval call and touches many call sites across retrieval_service/reranking_service/prompt_builder -- deferred as a distinct, larger pass rather than bundled into this one, per this task's own proportionality constraint."
+    },
+    {
+      "data_category": "FAISS vector index (index.faiss)",
+      "storage": "Local filesystem, vector_store/index.faiss",
+      "at_rest_protection": "not application-level encrypted",
+      "status": "unprotected_by_design",
+      "reason": "Binary embedding vectors, not reversible to exact source text; encrypting would make FAISS's own similarity search impossible without a full decrypt-to-memory step on every query, defeating the point of an on-disk index. Documented as a limitation, not solved."
+    },
+    {
+      "data_category": "Document metadata (filename, page/chunk counts, collection tag)",
+      "storage": "PostgreSQL, documents table",
+      "at_rest_protection": "not application-level encrypted",
+      "status": "unprotected_by_design",
+      "reason": "Filenames/counts, not free-text content; low sensitivity relative to chat content."
+    },
+    {
+      "data_category": "Feedback events (rating, optional free-text comment, rubric scores)",
+      "storage": "Local filesystem, feedback.jsonl",
+      "at_rest_protection": "not application-level encrypted",
+      "status": "unprotected_by_design",
+      "reason": "Read in plaintext by eval/metrics_report.py to compute Acceptance Rate and Inter-Annotator Agreement across many records at once -- an evaluation artifact, not primary user-content storage, and encrypting would require decrypting on every aggregation read for no corresponding sensitivity gain over the already-encrypted chat content itself."
+    },
+    {
+      "data_category": "Application logs (structured JSON)",
+      "storage": "stdout / captured log files",
+      "at_rest_protection": "N/A -- content excluded by design",
+      "status": "not_applicable",
+      "reason": "Settings.log_prompt_content is off by default; logs record query_length, not query content, unless explicitly enabled for debugging. Already documented in docs/ARCHITECTURE.md."
+    },
+    {
+      "data_category": "Usage logs (path, method, status, latency)",
+      "storage": "PostgreSQL, usage_logs table",
+      "at_rest_protection": "N/A -- no free-text user content",
+      "status": "not_applicable",
+      "reason": "No message/query content stored in this table by design."
+    },
+    {
+      "data_category": "Public demo/agricultural-pathology corpus",
+      "storage": "backend/data (or equivalent), FAISS index",
+      "at_rest_protection": "not encrypted",
+      "status": "not_required",
+      "reason": "Public reference material, not private user data -- encrypting would add cost/risk for no confidentiality benefit."
+    }
+  ],
+  "real_checks_executed_this_run": {
+    "chat_turn_content_encrypted_on_disk": true,
+    "chat_session_title_encrypted_on_disk": true,
+    "content_round_trip_correct": true,
+    "title_round_trip_correct": true,
+    "wrong_key_rejected": true,
+    "tampered_ciphertext_rejected": true,
+    "missing_key_write_fails_closed": true,
+    "cross_session_aad_isolation": true,
+    "legacy_plaintext_backward_compatible": true
+  },
+  "all_checks_passed": true,
+  "pytest_result": {
+    "exit_code": 0,
+    "summary_line": "33 passed in 2.16s"
+  },
+  "tenant_session_isolation": "Verified by cross_session_aad_isolation check above and by tests/test_session_repository_encryption.py::TestSessionIsolation / tests/test_postgres_session_store_encryption.py::TestSessionIsolation -- encryption is an additional guarantee on top of, never a replacement for, the existing tenant_id/session_id ownership checks.",
+  "encryption_in_transit": "OUT OF SCOPE for this pass. HTTPS/TLS status is documented separately in docs/ARCHITECTURE.md and docs/MODULE10_FINAL_SUBMISSION.md's existing limitations -- not re-claimed or re-measured here.",
+  "limitations": [
+    "Uploaded raw PDF files on disk remain unencrypted (see coverage_matrix reason).",
+    "FAISS metadata.json chunk text and the FAISS vector index itself remain unencrypted (see coverage_matrix reasons) -- documented as a boundary, not solved.",
+    "Feedback events (feedback.jsonl) remain unencrypted -- an evaluation artifact, not primary user-content storage.",
+    "No key rotation mechanism exists -- a single static key from ENCRYPTION_KEY_B64 for the process lifetime.",
+    "This is application-level encryption; it does not substitute for platform-level encryption (e.g. an encrypted disk/volume) at the infrastructure layer, which is out of scope for this project's local/demo deployment."
+  ]
+}

@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  html:not(.dark) {
+    color-scheme: light;
+  }
+
+  body {
+    @apply font-sans antialiased selection:bg-accent-500/25 selection:text-inherit;
+    @apply bg-surface-light text-slate-700;
+    @apply dark:bg-surface-dark dark:text-ink-secondary;
+    @apply relative;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* Printed output (e.g. exporting a conversation) should always be light
+     paper with dark text, regardless of which theme is active on screen —
+     dark-mode text colors are illegible against a printer's white page. */
+  @media print {
+    html,
+    body {
+      background: #ffffff !important;
+      color: #0f172a !important;
+      print-color-adjust: exact !important;
+      -webkit-print-color-adjust: exact !important;
+    }
+  }
+
+  /* Fixed, near-invisible grain over the whole viewport — the single
+     cheapest thing that separates a flat-color app shell from one that
+     feels like it has actual material to it. Pure SVG feTurbulence data
+     URI, no image asset. pointer-events: none + a negative z-index-free
+     fixed overlay so it never intercepts clicks or scrolls with content. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  html:not(.dark) body::before {
+    opacity: 0.015;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display font-semibold tracking-tight text-slate-900 dark:text-ink-primary;
+  }
+
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  /* Thin, translucent, rounded scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-400/30 dark:bg-white/10;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400/50 dark:bg-white/20;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+}
+
+@layer components {
+  /* Default surface for most cards: soft elevation, no blur. */
+  .panel {
+    @apply relative rounded-panel border border-border-light bg-card-light shadow-soft-light
+           dark:border-border dark:bg-card dark:shadow-soft;
+  }
+
+  .panel-hover {
+    @apply transition-all duration-200 ease-out;
+    @apply hover:bg-card-light-hover;
+    @apply dark:hover:bg-card-hover;
+  }
+
+  /* Reserved for floating chrome (Sidebar, Navbar, Modal) — the only
+     places blur genuinely earns its cost. */
+  .glass-panel {
+    @apply relative rounded-panel border border-border-light bg-card-light backdrop-blur-xl
+           shadow-soft-light
+           dark:border-border dark:bg-card dark:shadow-soft;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl text-sm font-medium
+           transition-all duration-200 ease-out
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/50 focus-visible:ring-offset-2
+           dark:focus-visible:ring-offset-surface-dark
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply btn border border-transparent bg-accent-500 text-white shadow-soft-light
+           hover:bg-accent-600 hover:-translate-y-px
+           active:translate-y-0 active:bg-accent-600
+           dark:bg-accent-500 dark:text-white dark:shadow-none
+           dark:hover:bg-accent-400;
+  }
+
+  .btn-secondary {
+    @apply btn border border-border-light bg-white/60 text-slate-700
+           hover:bg-white/90
+           dark:border-border dark:bg-white/[0.03] dark:text-ink-secondary dark:hover:bg-white/[0.06];
+  }
+
+  .btn-ghost {
+    @apply btn text-slate-500 hover:bg-slate-900/5 hover:text-slate-900
+           dark:text-ink-muted dark:hover:bg-white/[0.05] dark:hover:text-ink-primary;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-border-light bg-white/70 px-3.5 py-2.5 text-sm text-slate-800
+           placeholder-slate-400 transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-accent-500/40 focus:border-transparent
+           dark:border-border dark:bg-white/[0.03] dark:text-ink-primary dark:placeholder-ink-muted;
+  }
+}

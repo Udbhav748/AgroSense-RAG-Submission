@@ -1,0 +1,46 @@
+name: Deployment Health Monitor
+
+# Lightweight operational signal (Module 10 observability/alerting section):
+# periodically probes a deployed instance's /health endpoint and fails the
+# job (visible as a red check / optional notification) if it's down or slow.
+# Does NOT run unless DEPLOYMENT_HEALTH_URL is configured as a repository
+# variable — with no deployment configured, this workflow is inert by
+# design rather than failing noisily or fabricating a target to hit.
+# No secrets are used: /health requires no auth (see app/api/v1/routes/health.py).
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "*/30 * * * *"
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check deployment is configured
+        id: check
+        run: |
+          if [ -z "${{ vars.DEPLOYMENT_HEALTH_URL }}" ]; then
+            echo "DEPLOYMENT_HEALTH_URL repository variable is not set -- no live deployment to monitor. Skipping (not failing)."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Probe /health
+        if: steps.check.outputs.configured == 'true'
+        run: |
+          set -e
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code} %{time_total}" --max-time 10 "${{ vars.DEPLOYMENT_HEALTH_URL }}/health")
+          HTTP_CODE=$(echo "$RESPONSE" | cut -d' ' -f1)
+          LATENCY=$(echo "$RESPONSE" | cut -d' ' -f2)
+          echo "HTTP $HTTP_CODE in ${LATENCY}s"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Health check failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+          # Latency alert threshold: 3s (matches the RAG benchmark's own
+          # end-to-end latency target in docs/RAG_BENCHMARK_REPORT.md).
+          if awk "BEGIN {exit !($LATENCY > 3.0)}"; then
+            echo "::warning::Health check latency ${LATENCY}s exceeds the 3s alert threshold"
+          fi

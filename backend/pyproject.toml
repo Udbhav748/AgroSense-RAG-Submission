@@ -1,0 +1,62 @@
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+# Alembic migrations, eval harness, and runtime data dirs are not part of
+# the service's typed surface — migrations are ephemeral schema scripts,
+# the eval harness is an offline tool with its own stricter conventions,
+# and vector_store/uploads hold generated artifacts, not source.
+exclude = [
+    "alembic/",
+    "vector_store/",
+    "uploads/",
+    "eval/",
+]
+
+[[tool.mypy.overrides]]
+# Tests are intentionally more permissive (heavy monkeypatching, private
+# attr access, untyped fakes) than the strict production surface.
+module = "tests.*"
+strict = false
+disallow_untyped_defs = false
+check_untyped_defs = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# Practical ruleset: pyflakes (F), pycodestyle (E/W), isort (I), pyupgrade
+# (UP), import sorting/classification, comprehensions (C4), unused
+# variables (F841 via F), type-checking imports (TCH), and selected
+# readability/lint rules. Kept far smaller than the kitchen-sink select in
+# the original feature brief on purpose: a lint gate that fires hundreds
+# of low-signal warnings on a long-established codebase gets disabled, not
+# fixed. This set catches real bugs (unused imports/vars, undefined names,
+# unnecessary comprehensions) while staying green-able incrementally.
+select = ["E", "F", "I", "W", "UP", "B", "C4", "SIM", "TCH"]
+ignore = [
+    "E501",  # line length — black-formatted code often exceeds 100 cleanly
+    "E731",  # lambda assignments — deliberate in a few hot paths
+    "B008",  # FastAPI Depends() default args
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "SLF001"]  # assert + private-attr access in tests
+"alembic/*" = ["ALL"]  # generated migration scaffolding
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

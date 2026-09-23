@@ -1,0 +1,259 @@
+{
+  "version": "1.0.0",
+  "name": "AgroSense Agronomic Pathology Offline Knowledge Base",
+  "description": "Pre-cached diagnostic and treatment guidance for disconnected farm field operations.",
+  "lastUpdated": "2026-08-15",
+  "diseases": {
+    "early_blight": {
+      "name": "Early Blight",
+      "crop": "Tomato / Potato",
+      "pathogen": "Fungal (Alternaria solani)",
+      "severity": "Moderate",
+      "symptoms": [
+        "Small brown to black spots with characteristic concentric rings creating a target-board pattern.",
+        "Yellow chlorotic halos surrounding lesions, primarily beginning on older bottom leaves.",
+        "Progressive premature defoliation exposing fruit to sunscald.",
+        "Dark, sunken collar rot lesions on lower stems."
+      ],
+      "organicRemedies": {
+        "bioFungicides": [
+          "Bacillus subtilis (Serenade ASO) applied at 3.0 - 5.0 ml/L at first sign of spotting.",
+          "Copper Octanoate (Copper soap shield) at 2.0 - 3.5 ml/L every 7-10 days.",
+          "Trichoderma harzianum soil drench and foliar formulation to suppress fungal sporulation."
+        ],
+        "botanicalOils": [
+          "Cold-pressed Neem Oil (0.5% - 1.0% solution, ~5ml/L) with mild horticultural soap emulsifier.",
+          "Potassium Bicarbonate foliar spray (3g/L) to alter leaf surface pH against spores."
+        ],
+        "culturalPractices": [
+          "Prune lower leaves 12-18 inches from soil surface to prevent soil splash inoculation.",
+          "Apply 2-3 inches of organic straw or plastic mulch to barrier spores in soil.",
+          "Convert to drip irrigation to keep canopy foliage dry; avoid overhead watering."
+        ]
+      },
+      "chemicalControl": {
+        "activeIngredients": [
+          { "name": "Chlorothalonil 720 SC", "rate": "2.0 - 2.5 ml/L", "perAcre": "1.5 - 2.0 pt/acre", "phi": "0 days", "rei": "12 hours" },
+          { "name": "Mancozeb 75% WP", "rate": "2.0 - 2.5 g/L", "perAcre": "1.5 - 2.0 lbs/acre", "phi": "5 days", "rei": "24 hours" },
+          { "name": "Azoxystrobin 23% SC", "rate": "1.0 - 1.25 ml/L", "perAcre": "6.0 - 8.0 fl oz/acre", "phi": "0 days", "rei": "4 hours" },
+          { "name": "Difenoconazole 25% EC", "rate": "0.5 - 0.75 ml/L", "perAcre": "4.0 - 5.5 fl oz/acre", "phi": "7 days", "rei": "12 hours" }
+        ],
+        "sprayInterval": "Apply preventative sprays every 7 to 10 days during warm, humid conditions (75-85°F).",
+        "resistanceManagement": "Alternate FRAC Group M5 (Chlorothalonil) with FRAC Group 11 (Azoxystrobin)."
+      },
+      "dosage": {
+        "chemicalRatePerLiter": 2.0,
+        "chemicalUnit": "g",
+        "sprayVolumeGalPerAcre": 50,
+        "sprayVolumeLitersPer1000SqFt": 4.5
+      }
+    },
+    "late_blight": {
+      "name": "Late Blight",
+      "crop": "Tomato / Potato",
+      "pathogen": "Oomycete (Phytophthora infestans)",
+      "severity": "Severe",
+      "symptoms": [
+        "Water-soaked, irregular pale green lesions expanding rapidly into dark, greasy brown-black patches.",
+        "White cottony sporulation visible on leaf undersides in humid conditions.",
+        "Rapid collapse and blackening of whole stems, petioles, and foliage within days.",
+        "Firm, dark brown sunken rot on tubers or green/ripe fruit surfaces."
+      ],
+      "organicRemedies": {
+        "bioFungicides": [
+          "Copper Hydroxide / Bordeaux Mixture (1% copper sulfate + hydrated lime) applied preventatively.",
+          "Bacillus amyloliquefaciens (Double Nickel) applied at 2.5 - 4.0 g/L.",
+          "Fixed copper compounds applied every 5-7 days when weather is cool and damp."
+        ],
+        "botanicalOils": [
+          "Pure cold-pressed neem extract (10 ml/L) as a protective spore germination inhibitor."
+        ],
+        "culturalPractices": [
+          "Immediately rogue and bag completely infected plants; do not leave cull piles near fields.",
+          "Maintain wide row spacing (>36 inches) for rapid morning drying.",
+          "Eliminate volunteer tomato and potato plants which act as pathogen overwintering reservoirs."
+        ]
+      },
+      "chemicalControl": {
+        "activeIngredients": [
+          { "name": "Cymoxanil 60% + Mancozeb 20% WP", "rate": "2.0 g/L", "perAcre": "1.75 lbs/acre", "phi": "3 days", "rei": "24 hours" },
+          { "name": "Fluopicolide (Infinito 68.75 SC)", "rate": "1.5 ml/L", "perAcre": "1.2 pt/acre", "phi": "2 days", "rei": "12 hours" },
+          { "name": "Dimethomorph 50% WP", "rate": "1.0 - 1.5 g/L", "perAcre": "6.5 oz/acre", "phi": "4 days", "rei": "12 hours" }
+        ],
+        "sprayInterval": "High disease pressure requires 5 to 7-day spray intervals. Treat before rain events.",
+        "resistanceManagement": "Rotate FRAC Group 40 (Dimethomorph) with FRAC Group 43 (Fluopicolide) and Group 27 (Cymoxanil)."
+      },
+      "dosage": {
+        "chemicalRatePerLiter": 2.5,
+        "chemicalUnit": "g",
+        "sprayVolumeGalPerAcre": 60,
+        "sprayVolumeLitersPer1000SqFt": 5.0
+      }
+    },
+    "powdery_mildew": {
+      "name": "Powdery Mildew",
+      "crop": "Cucurbits / Apple / Grape / Tomato",
+      "pathogen": "Fungal (Podosphaera / Erysiphe / Leveillula spp.)",
+      "severity": "Moderate",
+      "symptoms": [
+        "Distinct white to talcum powder-like circular fungal spots on upper and lower leaf surfaces.",
+        "Leaves curl upward, turn yellow, desiccate, and turn brown/brittle.",
+        "Infected young leaves become distorted and stunted in growth."
+      ],
+      "organicRemedies": {
+        "bioFungicides": [
+          "Potassium Bicarbonate (MilStop / Armicarb) at 3.0 - 4.5 g/L for rapid eradicant action.",
+          "Bacillus subtilis (Serenade MAX) at 3.0 g/L as a preventative biofilm.",
+          "Sulfur dust or wettable sulfur (2.0 - 3.0 g/L) below 85°F."
+        ],
+        "botanicalOils": [
+          "Neem oil 0.75% solution (7.5 ml/L water) sprayed thoroughly covering leaf undersides.",
+          "Dilute milk spray (40% whole milk, 60% water) exposed to direct sunlight."
+        ],
+        "culturalPractices": [
+          "Plant in full sun (>6-8 hours direct sunlight) since UV light inhibits spore germination.",
+          "Prune dense canopy foliage to enhance internal airflow.",
+          "Avoid excessive synthetic nitrogen fertilization."
+        ]
+      },
+      "chemicalControl": {
+        "activeIngredients": [
+          { "name": "Myclobutanil 20% EW", "rate": "0.5 - 0.75 ml/L", "perAcre": "4.0 - 5.0 fl oz/acre", "phi": "0 days", "rei": "24 hours" },
+          { "name": "Trifloxystrobin 50% WDG", "rate": "0.4 - 0.6 g/L", "perAcre": "2.0 - 3.8 oz/acre", "phi": "0 days", "rei": "12 hours" }
+        ],
+        "sprayInterval": "Apply every 7-14 days at first appearance of white powdery colonies.",
+        "resistanceManagement": "Alternate DMI fungicides (FRAC 3) with QoI fungicides (FRAC 11)."
+      },
+      "dosage": {
+        "chemicalRatePerLiter": 1.5,
+        "chemicalUnit": "g",
+        "sprayVolumeGalPerAcre": 45,
+        "sprayVolumeLitersPer1000SqFt": 4.0
+      }
+    },
+    "apple_scab": {
+      "name": "Apple Scab",
+      "crop": "Apple",
+      "pathogen": "Fungal (Venturia inaequalis)",
+      "severity": "Moderate",
+      "symptoms": [
+        "Olive-green to velvety dark brown lesions on leaves with feathery margins.",
+        "Premature leaf drop in mid-season.",
+        "Velvety brown lesions on fruit developing into corky, cracked scabby patches."
+      ],
+      "organicRemedies": {
+        "bioFungicides": [
+          "Liquid Lime Sulfur applied during delayed dormant to pink bud stage.",
+          "Wettable sulfur (3.0 - 4.0 g/L) applied before forecast rain events."
+        ],
+        "culturalPractices": [
+          "Rake and shred fallen apple leaves in autumn to accelerate leaf decomposition.",
+          "Prune trees during dormancy into an open vase or central leader."
+        ]
+      },
+      "chemicalControl": {
+        "activeIngredients": [
+          { "name": "Captan 80% WDG", "rate": "2.0 - 2.5 g/L", "perAcre": "2.5 - 3.5 lbs/acre", "phi": "0 days", "rei": "24 hours" },
+          { "name": "Mancozeb 75% DF", "rate": "2.0 g/L", "perAcre": "3.0 lbs/acre", "phi": "77 days", "rei": "24 hours" }
+        ],
+        "sprayInterval": "Green tip through 2nd cover spray every 5-7 days pre-bloom.",
+        "resistanceManagement": "Tank-mix systemic fungicides with a protectant (Captan)."
+      },
+      "dosage": {
+        "chemicalRatePerLiter": 2.2,
+        "chemicalUnit": "g",
+        "sprayVolumeGalPerAcre": 100,
+        "sprayVolumeLitersPer1000SqFt": 8.0
+      }
+    },
+    "bacterial_spot": {
+      "name": "Bacterial Spot",
+      "crop": "Tomato / Pepper",
+      "pathogen": "Bacterial (Xanthomonas spp.)",
+      "severity": "Severe",
+      "symptoms": [
+        "Small (1-3mm) dark brown to black angular water-soaked spots on leaves and stems.",
+        "Greasy appearance on leaf undersides with narrow yellow halos.",
+        "Fruit exhibits raised, scab-like, brown warty blemishes."
+      ],
+      "organicRemedies": {
+        "bioFungicides": [
+          "Fixed Copper Hydroxide + Bacillus subtilis tank mix.",
+          "Bacteriophage biological sprays (AgriPhage).",
+          "Peroxyacetic acid / Hydrogen dioxide (OxiDate 2.0)."
+        ],
+        "culturalPractices": [
+          "Avoid working in wet fields; use drip irrigation exclusively.",
+          "Treat seed with hot water (122°F for 25 minutes for tomato; 125°F for 30 minutes for pepper).",
+          "Rotate with non-host crops for at least 2 consecutive seasons."
+        ]
+      },
+      "chemicalControl": {
+        "activeIngredients": [
+          { "name": "Copper Hydroxide + Mancozeb mix", "rate": "2.0 g/L each", "perAcre": "1.5 lbs/acre each", "phi": "5 days", "rei": "24 hours" },
+          { "name": "Acibenzolar-S-methyl (Actigard 50WG)", "rate": "0.15 g/L", "perAcre": "0.75 oz/acre", "phi": "14 days", "rei": "12 hours" }
+        ],
+        "sprayInterval": "Spray every 5 to 7 days during warm, rainy weather.",
+        "resistanceManagement": "Tank-mix copper with mancozeb to overcome copper-tolerant Xanthomonas."
+      },
+      "dosage": {
+        "chemicalRatePerLiter": 2.5,
+        "chemicalUnit": "g",
+        "sprayVolumeGalPerAcre": 50,
+        "sprayVolumeLitersPer1000SqFt": 4.5
+      }
+    },
+    "healthy": {
+      "name": "Healthy Plant Baseline",
+      "crop": "All Crops",
+      "pathogen": "None (Healthy tissue)",
+      "severity": "Low",
+      "symptoms": [
+        "Uniform chlorophyll pigmentation, normal turgidity, vigorous growth.",
+        "No lesions, yellow halos, wilting, or fungal sporulation."
+      ],
+      "organicRemedies": {
+        "bioFungicides": [
+          "Preventative foliar Seaweed extract or Fish Hydrolysate for immune vigor.",
+          "Prophylactic beneficial microbes (Mycorrhizae & Bacillus subtilis)."
+        ],
+        "culturalPractices": [
+          "Maintain balanced organic soil nutrition based on periodic soil testing.",
+          "Consistent drip irrigation scheduling aligned with evapotranspiration rates."
+        ]
+      },
+      "chemicalControl": {
+        "activeIngredients": [
+          { "name": "No chemical intervention needed", "rate": "0 g/L", "perAcre": "0", "phi": "N/A", "rei": "0 hours" }
+        ],
+        "sprayInterval": "Continue scouting twice weekly.",
+        "resistanceManagement": "Preserve beneficial predator insects."
+      },
+      "dosage": {
+        "chemicalRatePerLiter": 0,
+        "chemicalUnit": "g",
+        "sprayVolumeGalPerAcre": 0,
+        "sprayVolumeLitersPer1000SqFt": 0
+      }
+    }
+  },
+  "calculatorPresets": {
+    "areaUnits": [
+      { "id": "sq_ft", "label": "Square Feet (sq ft)", "factorToAcres": 0.0000229568 },
+      { "id": "acres", "label": "Acres (ac)", "factorToAcres": 1.0 },
+      { "id": "sq_m", "label": "Square Meters (sq m)", "factorToAcres": 0.000247105 },
+      { "id": "hectares", "label": "Hectares (ha)", "factorToAcres": 2.47105 }
+    ],
+    "equipment": [
+      { "id": "knapsack", "name": "16L Backpack Sprayer (Knapsack)", "tankCapacityLiters": 16 },
+      { "id": "handheld", "name": "5L Garden Pump Sprayer", "tankCapacityLiters": 5 },
+      { "id": "boom", "name": "400L Tractor Boom Sprayer", "tankCapacityLiters": 400 }
+    ],
+    "chemicals": [
+      { "id": "neem", "name": "Cold-Pressed Neem Oil 0.5%", "dosagePerLiter": 5.0, "unit": "ml" },
+      { "id": "copper", "name": "Copper Hydroxide 50% WP", "dosagePerLiter": 2.5, "unit": "g" },
+      { "id": "mancozeb", "name": "Mancozeb 75% WP", "dosagePerLiter": 2.0, "unit": "g" },
+      { "id": "bacillus", "name": "Bacillus subtilis Bio-Fungicide", "dosagePerLiter": 3.0, "unit": "ml" }
+    ]
+  }
+}

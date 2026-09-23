@@ -1,0 +1,97 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-21T18:07:58.196787+00:00",
+    "git_commit": "7873b62",
+    "dataset_version": "parallel_execution_v1",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": "gemini",
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": true,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 5,
+    "evaluator": "eval/module10/runners/run_parallel_execution_final.py"
+  },
+  "test_name": "handle_diagnose vision+weather concurrent execution",
+  "workflow_tested": "ChatService.handle_diagnose (app/services/rag_service.py) -- the real, unmodified production method, called identically in both conditions below.",
+  "branches_executed": {
+    "vision": "vision_node -> diagnose_image (LeafSense/Gemini classification)",
+    "weather": "WeatherService.get_weather_risk (Open-Meteo microclimate lookup)"
+  },
+  "branch_dependencies": "None -- vision depends only on the image bytes, weather depends only on lat/lon; neither needs the other's result until the (unrelated, downstream) generation-prompt step. Confirmed independent by code inspection, not assumed.",
+  "concurrency_mechanism": "app.services.agent_graph.engine.run_concurrent_branches -- asyncio.gather over an async branch (weather, awaited directly) and a sync branch (vision, run via asyncio.to_thread, a real OS thread). Identical code path production traffic uses.",
+  "methodology_disclosure": "Both conditions call the SAME ChatService.handle_diagnose(latitude=..., longitude=...) on the SAME ChatService instance with the SAME monkeypatched I/O boundaries (diagnose_image, WeatherService.get_weather_risk, each sleeping a fixed disclosed duration -- vision=0.35s, weather=0.3s -- standing in for the real network round-trip since no live LeafSense/Open-Meteo call is available in this evaluation environment). The ONLY difference between the 'serial baseline' and 'parallel result' below is whether run_concurrent_branches executes its two branches concurrently (real, unmodified) or sequentially (a test-only stand-in with an identical return shape, swapped in via monkeypatch only for the serial condition) -- isolating concurrency as the one measured variable. The response cache is cleared before every repetition so a cache hit never fakes a fast result.",
+  "n_repetitions": 5,
+  "serial_baseline": {
+    "description": "handle_diagnose(latitude=..., longitude=...) with run_concurrent_branches swapped for a sequential stand-in -- same call, same ChatService instance, branches run one after another.",
+    "timings_seconds": [
+      0.6646,
+      0.6558,
+      0.6561,
+      0.6661,
+      0.6566
+    ],
+    "mean_seconds": 0.6598,
+    "min_seconds": 0.6558,
+    "max_seconds": 0.6661,
+    "expected_branch_sum_approximately": 0.65
+  },
+  "parallel_result": {
+    "description": "The real, unmodified handle_diagnose(latitude=..., longitude=...) call -- vision and weather run concurrently internally via the real run_concurrent_branches.",
+    "timings_seconds": [
+      0.3543,
+      0.3539,
+      0.354,
+      0.3551,
+      0.3547
+    ],
+    "mean_seconds": 0.3544,
+    "min_seconds": 0.3539,
+    "max_seconds": 0.3551,
+    "expected_branch_max_approximately": 0.35
+  },
+  "measured_latency_reduction": {
+    "absolute_seconds": 0.3054,
+    "ratio_parallel_to_serial": 0.5371,
+    "note": "Measured directly from the two timing series above -- not a hypothetical/expected number substituted for a real one."
+  },
+  "concurrency_evidence": {
+    "parallel_mean_close_to_max_branch_duration": true,
+    "parallel_mean_well_below_serial_mean": true,
+    "interpretation": "Both conditions run the identical handle_diagnose call over the identical mocked work -- the parallel condition's mean duration is close to max(vision, weather) rather than close to the serial condition's mean, which is the real signature of concurrent execution, not merely a difference in unrelated overhead."
+  },
+  "branch_success_failure": {
+    "vision_succeeded_every_repetition": true,
+    "weather_succeeded_every_repetition": true,
+    "last_response_has_diagnosis": true,
+    "last_response_has_weather_risk": true
+  },
+  "environment": {
+    "python_version": "3.13.9",
+    "note": "Single local machine, single process -- not a distributed/cloud measurement."
+  },
+  "implementation_reference": {
+    "primitive": "backend/app/services/agent_graph/engine.py::run_concurrent_branches, BranchResult",
+    "application_wiring": "backend/app/services/rag_service.py::ChatService.handle_diagnose (latitude/longitude parameters)",
+    "route_wiring": "backend/app/api/v1/routes/query.py::diagnose (passes latitude/longitude through instead of pre-fetching weather sequentially)",
+    "tests": "backend/tests/test_agent_graph_parallel_execution.py (primitive-level, 13 tests), backend/tests/test_handle_diagnose_parallel.py (real-workflow-level, 6 tests)"
+  },
+  "limitations": [
+    "Vision and weather I/O are monkeypatched with fixed, disclosed sleep durations -- not a live LeafSense/Open-Meteo measurement. The concurrency scheduling itself is real and unmodified between conditions.",
+    "The serial-baseline condition uses a test-only sequential stand-in for run_concurrent_branches (identical return shape) rather than a second, separately-maintained code path in the application -- this is standard for isolating one variable in an A/B-style timing comparison, not a claim that a sequential mode exists in production.",
+    "Only ONE real workflow (handle_diagnose's vision+weather fan-out) currently uses this primitive -- other potentially-independent operations elsewhere in the codebase were not audited or converted in this pass.",
+    "The streaming diagnose path (stream_diagnose, a synchronous generator) was NOT converted -- converting a yield-based generator to interleave with asyncio concurrency safely was judged too invasive for this pass's scope; it retains the old sequential weather-then-vision order, disclosed rather than silently left inconsistent.",
+    "Single local machine, single process measurement -- not a distributed or cloud-scale latency claim.",
+    "5 repetitions is a small sample; no statistical significance test is reported, consistent with this project's other small-sample evaluations."
+  ]
+}

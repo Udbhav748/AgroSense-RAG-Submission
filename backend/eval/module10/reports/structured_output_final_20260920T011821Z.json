@@ -1,0 +1,205 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-20T01:18:21.059181+00:00",
+    "git_commit": "3dcb53f",
+    "dataset_version": "structured_output_v1",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": null,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": false,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 17,
+    "evaluator": "eval/module10/runners/run_structured_output_eval.py",
+    "target": "app.services.structured_output.parse_structured_answer"
+  },
+  "methodology": "Offline, deterministic evaluation of the parser/validator against a fixed set of raw provider-output strings covering valid JSON, fenced JSON, malformed JSON, missing/wrong-type/empty required fields, extra fields, and simulated provider failures. Does NOT evaluate live generation quality -- only whether the parser correctly accepts well-formed output and correctly rejects (degrades to None, never raises, never silently accepts) malformed output. 'Schema Compliance Rate' = fraction of cases whose raw output actually parses into a valid StructuredAnswer, regardless of whether that was the intended outcome for the case. 'Parser correctness rate' = fraction of cases where the parser's accept/reject decision matched the case's own expect_success label -- the more meaningful pass/fail number for a malformed-input test suite, since correctly REJECTING a malformed case is success, not failure.",
+  "schema_compliance_rate": 0.4118,
+  "field_accuracy": 1.0,
+  "parser_correctness_rate": 1.0,
+  "n_cases": 17,
+  "n_schema_compliant": 7,
+  "n_field_checks": 14,
+  "n_correct_field_checks": 14,
+  "limitations": [
+    "This dataset tests the parser in isolation with hand-authored raw strings, not live LLM output -- it does not measure how often a real provider actually emits malformed JSON in production (that would require live generation calls against structured_response=True requests, not attempted in this pass to conserve API quota).",
+    "StructuredAnswer.answer has no min_length constraint, so an empty-string answer passes schema validation (case so_010) -- a genuine, disclosed schema looseness, not fixed in this pass.",
+    "17 cases is a fixed, hand-authored set covering the documented failure modes in structured_output.py's own docstring/tests, not an exhaustive fuzz test."
+  ],
+  "per_case": [
+    {
+      "case_id": "so_001",
+      "category": "valid",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      }
+    },
+    {
+      "case_id": "so_002",
+      "category": "valid_optional_field_omitted",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      }
+    },
+    {
+      "case_id": "so_003",
+      "category": "fenced_json",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      }
+    },
+    {
+      "case_id": "so_004",
+      "category": "fenced_json_no_language_tag",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      }
+    },
+    {
+      "case_id": "so_005",
+      "category": "json_with_trailing_prose",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      }
+    },
+    {
+      "case_id": "so_006",
+      "category": "malformed_json",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "note": null
+    },
+    {
+      "case_id": "so_007",
+      "category": "missing_required_field",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "note": null
+    },
+    {
+      "case_id": "so_008",
+      "category": "wrong_type_answer_is_number",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "note": null
+    },
+    {
+      "case_id": "so_009",
+      "category": "wrong_type_sources_is_string",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "note": null
+    },
+    {
+      "case_id": "so_010",
+      "category": "empty_required_field",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "note": "parse_structured_answer rejects an empty answer even though StructuredAnswer's Pydantic schema alone (no min_length) would technically allow it -- a stricter, safer behavior than the bare schema guarantees."
+    },
+    {
+      "case_id": "so_011",
+      "category": "extra_field",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      }
+    },
+    {
+      "case_id": "so_012",
+      "category": "provider_failure_empty_response",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "note": null
+    },
+    {
+      "case_id": "so_013",
+      "category": "provider_failure_whitespace_only",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "note": null
+    },
+    {
+      "case_id": "so_014",
+      "category": "non_json_prose_only",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "note": null
+    },
+    {
+      "case_id": "so_015",
+      "category": "fence_with_only_whitespace_inside",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "note": null
+    },
+    {
+      "case_id": "so_016",
+      "category": "nested_type_error_sources_contains_non_string",
+      "expect_success": false,
+      "actual_success": false,
+      "case_passed": true,
+      "note": null
+    },
+    {
+      "case_id": "so_017",
+      "category": "valid_multiple_sources",
+      "expect_success": true,
+      "actual_success": true,
+      "case_passed": true,
+      "note": null,
+      "field_checks": {
+        "answer_correct": true,
+        "sources_correct": true
+      }
+    }
+  ]
+}

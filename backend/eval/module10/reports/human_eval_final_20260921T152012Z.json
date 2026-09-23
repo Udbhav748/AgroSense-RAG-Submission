@@ -1,0 +1,126 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-21T15:20:12.458238+00:00",
+    "git_commit": "3a19bcc",
+    "dataset_version": "human_eval_v1_24case",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": "gemini",
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": true,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 24,
+    "evaluator": "eval/module10/runners/run_human_eval_final.py"
+  },
+  "case_count": 24,
+  "reviewer_count": 1,
+  "reviewer_2_status": "absent",
+  "rubric_version": "docs/HUMAN_EVAL.md's 7-dimension 1-5 rubric, unchanged by this pass",
+  "reviewer_1_summary": {
+    "correctness": {
+      "mean": 4.391,
+      "median": 5,
+      "stdev": 0.988,
+      "n": 23
+    },
+    "helpfulness": {
+      "mean": 4,
+      "median": 5.0,
+      "stdev": 1.504,
+      "n": 24
+    },
+    "completeness": {
+      "mean": 3.696,
+      "median": 5,
+      "stdev": 1.608,
+      "n": 23
+    },
+    "safety": {
+      "mean": 5,
+      "median": 5.0,
+      "stdev": 0.0,
+      "n": 24
+    },
+    "tone": {
+      "mean": 4.208,
+      "median": 4.5,
+      "stdev": 0.884,
+      "n": 24
+    },
+    "groundedness": {
+      "mean": 4.6,
+      "median": 5,
+      "stdev": 0.632,
+      "n": 15
+    },
+    "citation_quality": {
+      "mean": 3.9,
+      "median": 4.5,
+      "stdev": 1.373,
+      "n": 20
+    }
+  },
+  "reviewer_2_summary": null,
+  "combined_summary": null,
+  "iaa_simple_mean_abs_diff": {
+    "iaa": "not available",
+    "reason": "one reviewer (1 reviewer(s) total, 0 cases with 2+ independent scores)"
+  },
+  "iaa_weighted_cohens_kappa": {
+    "kappa": "not available",
+    "reason": "fewer than 2 reviewers share any case (1 reviewer(s) total)"
+  },
+  "disagreement_statistics": {
+    "available": false,
+    "reason": "one reviewer"
+  },
+  "hard_cases": {
+    "lowest_scoring_cases": [
+      {
+        "case_id": "case_017",
+        "mean_score_all_reviewers_all_dims": 2.667,
+        "case_type": "hard/ambiguous"
+      },
+      {
+        "case_id": "case_019",
+        "mean_score_all_reviewers_all_dims": 2.833,
+        "case_type": "hard/out_of_corpus (stale label)"
+      },
+      {
+        "case_id": "case_012",
+        "mean_score_all_reviewers_all_dims": 3.0,
+        "case_type": "edge"
+      },
+      {
+        "case_id": "case_022",
+        "mean_score_all_reviewers_all_dims": 3.0,
+        "case_type": "security/malicious_retrieved_content"
+      },
+      {
+        "case_id": "case_021",
+        "mean_score_all_reviewers_all_dims": 3.167,
+        "case_type": "hard/wrong_crop"
+      }
+    ]
+  },
+  "privacy": {
+    "pii_scan": "The 24 cases (queries + system outputs) contain no names, email addresses, phone numbers, or other personal data -- they are PMP-course-document and plant-pathology domain questions plus canned conversational replies. Case IDs (case_001..case_024) are used throughout rather than any reviewer-identifying information beyond a chosen reviewer_id string."
+  },
+  "limitations": [
+    "Reviewer 1's ratings were transcribed from docs/HUMAN_EVAL.md's existing markdown table, not re-scored -- a faithful transcription, not a new judgment pass.",
+    "Blinding depends on the human reviewer actually following the documented protocol (not opening docs/HUMAN_EVAL.md before scoring) -- software cannot fully enforce this.",
+    "Weighted Cohen's kappa on N=24 cases (or fewer per-dimension, where N/A entries reduce the paired sample) is a small-sample estimate -- no significance test is reported.",
+    "IAA is computed only for dimensions/cases where both reviewers gave a non-null rating; N/A entries (e.g. Groundedness on conversational cases) are excluded from that dimension's pairing, not imputed.",
+    "IAA CANNOT BE CLAIMED: only one reviewer's ratings are present."
+  ]
+}

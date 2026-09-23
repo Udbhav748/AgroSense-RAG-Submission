@@ -1,0 +1,105 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-19T09:27:19.597734+00:00",
+    "git_commit": "28fc722",
+    "dataset_version": "module10_v1",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "llama-3.3-70b-versatile",
+    "fallback_llm_provider": null,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": false,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 12
+  },
+  "failure_detection_rate": 1.0,
+  "recovery_success_rate": 1.0,
+  "safe_failure_rate": 1.0,
+  "unhandled_failure_rate": 0.0,
+  "n_measured": 11,
+  "n_not_applicable": 1,
+  "per_case": {
+    "fail_001": {
+      "category": "llm_timeout",
+      "detected": true,
+      "recovered": true,
+      "final_state": "answer='FALLBACK_REPLY'"
+    },
+    "fail_002": {
+      "category": "llm_rate_limit",
+      "detected": true,
+      "recovered": true,
+      "final_state": "answer='FALLBACK_REPLY'"
+    },
+    "fail_003": {
+      "category": "llm_provider_error",
+      "detected": true,
+      "recovered": true,
+      "final_state": "answer='FALLBACK_REPLY'"
+    },
+    "fail_004": {
+      "category": "retrieval_timeout",
+      "detected": true,
+      "recovered": true,
+      "final_state": "ChatServiceError (500)"
+    },
+    "fail_005": {
+      "category": "vector_store_failure",
+      "detected": true,
+      "recovered": true,
+      "final_state": "error_type=retriever"
+    },
+    "fail_006": {
+      "category": "reranker_failure",
+      "detected": "N/A",
+      "recovered": "N/A",
+      "final_state": "reranking_service degrades internally inside retrieve() (existing behavior); not independently re-tested here to avoid re-deriving retrieval_service's own test coverage (see backend/tests/test_reranker.py::TestCrossEncoderReranker for the existing fallback test)",
+      "not_measured_reason": "covered by existing test suite, not re-measured to avoid duplicate logic"
+    },
+    "fail_007": {
+      "category": "web_search_failure",
+      "detected": true,
+      "recovered": true,
+      "final_state": "degraded to []"
+    },
+    "fail_008": {
+      "category": "vision_service_timeout",
+      "detected": true,
+      "recovered": true,
+      "final_state": "VisionServiceError propagated (no fallback path exists, by design)"
+    },
+    "fail_009": {
+      "category": "invalid_structured_output",
+      "detected": true,
+      "recovered": true,
+      "final_state": "fell back to plain _generate(): 'grounded answer [1]'"
+    },
+    "fail_010": {
+      "category": "approval_rejection",
+      "detected": true,
+      "recovered": true,
+      "final_state": "approval_status=rejected, route=safe_finalizer"
+    },
+    "fail_011": {
+      "category": "loop_cap_reached",
+      "detected": true,
+      "recovered": true,
+      "final_state": "workflow_status=running, error=Max steps exceeded (3)"
+    },
+    "fail_012": {
+      "category": "malformed_input",
+      "detected": true,
+      "recovered": true,
+      "final_state": "workflow_status=failed, termination_reason=validation_failure"
+    }
+  }
+}

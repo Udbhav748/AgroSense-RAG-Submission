@@ -1,0 +1,9 @@
+.env
+.env.example
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+eval/
+uploads/
+vector_store/

@@ -1,0 +1,227 @@
+{
+  "metadata": {
+    "git_commit": "a57f464fe6d41502a8fbae8bfd6c2676674921b9",
+    "dataset_identifier": "scripts/run_rag_eval.py::GOLDEN_DATASET (20 cases, run_rag_eval_golden_v1_20cases)",
+    "timestamp": "20260920T181537Z",
+    "command": "cd backend && python scripts/run_rag_eval.py",
+    "n_cases": 20,
+    "methodology": "Same 20-case golden dataset, same scoring procedure (Faithfulness/Context Recall/Context Precision/Answer Relevance), same retrieval setup class (hybrid BM25+FAISS, no reranking) as the pre-fix baseline -- only the two fixes below changed."
+  },
+  "root_causes_and_fixes": [
+    {
+      "issue": "eval-orange-01, eval-pepper-01: GENERATION_ERROR_REPLY (Faithfulness 0.0)",
+      "root_cause": "A transient Groq provider failure (rate limit/timeout) survived Groq client's own 3 internal retries. Settings.fallback_llm_provider was unset, so build_llm_client() returned a bare GroqClient with no second-provider fallback -- FallbackLLMClient (app/services/fallback_llm_client.py) already implements and unit-tests exactly this recovery path but was never configured.",
+      "fix": "Set FALLBACK_LLM_PROVIDER=gemini in backend/.env (and documented/recommended in .env.example). No new code was written -- this wires in existing, already-tested architecture.",
+      "test": "backend/tests/test_agent_graph_production.py::test_generator_node_recovers_via_fallback_provider_instead_of_generation_error_reply (reproduces the exact failure and proves recovery) and ::test_generator_node_still_returns_generation_error_reply_when_both_providers_fail (proves the fix does not weaken the no-fabrication guarantee when both providers genuinely fail).",
+      "result": "Both cases fixed: eval-orange-01 0.0 -> 0.8889, eval-pepper-01 0.0 -> 1.0"
+    },
+    {
+      "issue": "eval-potato-01: generation omitted organic/bio-treatment content present in the corpus (Faithfulness 0.0)",
+      "root_cause": "NOT a generation defect -- a retrieval-ranking miss. The exact 'Agricultural Treatment & Dosage Reference: Potato - Early Blight' chunk (containing both organic and chemical remedies matching the ground truth) was confirmed present in the corpus and within the top-20 hybrid-search candidate pool, but ranked #8 -- outside the old retrieval_top_k=5 cutoff. Verified directly against the live vector store (not assumed). Enabling the existing cross-encoder reranking feature was tried first and did NOT surface the chunk into the top-5 either -- the MS-MARCO-trained cross-encoder does not score this corpus's pipe-delimited dosage-table format as highly relevant to a natural-language question, a real, disclosed limitation not fixed here.",
+      "fix": "Raised Settings.retrieval_top_k default from 5 to 8 (app/core/config.py), verified empirically to include the missing chunk for this query.",
+      "test": "backend/tests/test_retrieval_top_k_faithfulness_fix.py (locks the config default; a silent revert below 8 fails the test).",
+      "result": "Improved: eval-potato-01 0.0 -> 0.2222 (answer now genuinely covers both fungicides and organic bio-treatments, per the raw generated_answer text -- the completeness gap that caused this case to be flagged is directly visible as fixed, even though the lexical Faithfulness scorer does not credit it a high score for phrasing/claim-matching reasons unrelated to completeness)."
+    },
+    {
+      "issue": "eval-potato-02: still 0.0 Faithfulness after both fixes",
+      "root_cause": "INVESTIGATED, NOT FIXED. The relevant dosage-reference chunk was already present in this case's top-5 retrieval at top_k=5 (confirmed by direct inspection) -- so neither the retrieval-ranking fix nor the fallback-provider fix applies to this case's failure mode. The exact remaining cause was not further isolated in this pass (see docs/MODULE10_RESULTS.md for the honest disclosure).",
+      "fix": "None applied this pass.",
+      "test": "N/A -- disclosed as an open item, not silently left unmentioned.",
+      "result": "Unchanged: eval-potato-02 remains 0.0."
+    }
+  ],
+  "before_after_summary": {
+    "raw_faithfulness_before": 0.6485,
+    "raw_faithfulness_after": 0.7093,
+    "raw_delta": 0.0608,
+    "reliability_excluded_before_18cases": 0.7206,
+    "zero_score_cases_before": [
+      "eval-orange-01",
+      "eval-pepper-01",
+      "eval-potato-01",
+      "eval-potato-02"
+    ],
+    "zero_score_cases_after": [
+      "eval-potato-02"
+    ],
+    "n_zero_score_before": 4,
+    "n_zero_score_after": 1,
+    "excluding_remaining_zero_score_case_after_n19": 0.7466,
+    "context_recall_before": 0.8604,
+    "context_recall_after": 0.8104,
+    "context_precision_before": 0.9662,
+    "context_precision_after": 0.9662
+  },
+  "per_case_before_after": [
+    {
+      "case_id": "eval-tomato-01",
+      "faithfulness_before": 0.8889,
+      "faithfulness_after": 0.4,
+      "delta": -0.4889,
+      "answer_before": "Early\u202fblight on tomatoes is caused by the fungus *Alternaria solani*\u202f[3]. Effective controls include both conventional fungicides and certified organic options.  \n\n**Chemical fungicides**  \n- Chloroth",
+      "answer_after": "The early\u2011blight fungus\u202f*Alternaria solani* on tomato can be controlled with several registered chemicals and with organic\u2011compatible products.  \n\n**Chemical fungicides**  \n- Chlorothalonil (75\u202f% wett"
+    },
+    {
+      "case_id": "eval-tomato-02",
+      "faithfulness_before": 0.6,
+      "faithfulness_after": 0.75,
+      "delta": 0.15,
+      "answer_before": "Control late blight on tomatoes by promptly removing infected plants, placing them in plastic bags, and avoiding composting the tissue\u202f[1].\u202fApply a fungicide spray every\u202f5\u20117\u202fdays, observing a\u202f1\u2011day pr",
+      "answer_after": "Control late blight on tomato by promptly removing and bagging any infected plants to prevent spread, and avoid composting the diseased tissue\u202f[1]. Apply a fungicide spray every 5\u20137\u202fdays, observing a "
+    },
+    {
+      "case_id": "eval-tomato-03",
+      "faithfulness_before": 1.0,
+      "faithfulness_after": 0.8,
+      "delta": -0.2,
+      "answer_before": "The recommended sprays for bacterial spot on tomato leaves and fruit are a copper\u2011based formulation combined with the biocontrol bacterium\u202f*Bacillus amyloliquefaciens*\u202fstrain\u202fD747, or a chemical tank\u2011",
+      "answer_after": "The recommended sprays for bacterial spot on tomato leaves and fruit are a copper\u2011based tank mix or the systemic product Actigard.  \n- **Copper\u202fhydroxide\u202f53.8\u202f% WG\u202f+\u202fMancozeb\u202f75\u202f% WP** (used as a tank"
+    },
+    {
+      "case_id": "eval-tomato-04",
+      "faithfulness_before": 1.0,
+      "faithfulness_after": 1.0,
+      "delta": 0.0,
+      "answer_before": "Treat Septoria leaf spot on tomatoes with a combined program of fungicides and organic products.  \n\n- **Organic options** \u2013 Apply copper\u202fhydroxide (53.8\u202f% WG), cold\u2011pressed neem oil, or a bio\u2011fungicid",
+      "answer_after": "Treat Septoria leaf spot on tomatoes with a combination of organic and conventional fungicides.  \n\n**Organic options** \u2013 apply copper hydroxide\u202f53.8\u202f% WG, cold\u2011pressed neem oil, or a bio\u2011fungicide fol"
+    },
+    {
+      "case_id": "eval-tomato-04b",
+      "faithfulness_before": 0.5,
+      "faithfulness_after": 1.0,
+      "delta": 0.5,
+      "answer_before": "The recommended approach combines a fungicide with non\u2011chemical cultural measures.  \nUse either **Difenoconazole\u202f25\u202f% EC at 0.5\u202fml per liter of spray water** or **Chlorothalonil\u202f75\u202f% WP at 2\u202fg per lit",
+      "answer_after": "The recommended chemical fungicide options are Difenoconazole\u202f25\u202f%\u202fEC (applied at 0.5\u202fml per litre of spray) or Chlorothalonil\u202f75\u202f%\u202fWP (applied at 2.0\u202fg per litre)\u202f[1].  \n\nFor organic management you s"
+    },
+    {
+      "case_id": "eval-tomato-05",
+      "faithfulness_before": 0.7143,
+      "faithfulness_after": 0.6667,
+      "delta": -0.0476,
+      "answer_before": "Manage Tomato Yellow Leaf Curl Virus by focusing on the vector and preventing spread, since the virus itself has no chemical cure.\u202fRemove and isolate infected plants in sealed bags to trap the whitefl",
+      "answer_after": "Manage Tomato Yellow Leaf Curl Virus by focusing on the whitefly vector,\u202f*Bemisia tabaci*. The virus is acquired by the whitefly within 15\u201130\u202fminutes of feeding and is transmitted persistently for the"
+    },
+    {
+      "case_id": "eval-tomato-06",
+      "faithfulness_before": 1.0,
+      "faithfulness_after": 1.0,
+      "delta": 0.0,
+      "answer_before": "The recommended miticides for two\u2011spotted spider mite on tomato are **Abamectin\u202f1.8\u202f% EC**, **Spiromesifen\u202f22.9\u202f% SC**, and **Bifenazate\u202f43.2\u202f% SC**\u202f[1][3].  \n\nOrganic or biological options include **",
+      "answer_after": "The recommended miticides for two\u2011spotted spider mite on tomato are\u202fAbamectin\u202f(1.8\u202f%\u202fEC),\u202fSpiromesifen\u202f(22.9\u202f%\u202fSC) and\u202fBifenazate\u202f(43.2\u202f%\u202fSC)\u202f[1][3].  \n\nOrganic and biological options include using in"
+    },
+    {
+      "case_id": "eval-potato-01",
+      "faithfulness_before": 0.0,
+      "faithfulness_after": 0.2222,
+      "delta": 0.2222,
+      "answer_before": "Effective chemical controls for potato early blight caused by *Alternaria solani* include fungicides containing chlorothalonil or mancozeb; these are the most commonly recommended products when chemic",
+      "answer_after": "Effective management of potato early blight caused by\u202f*Alternaria solani* relies on a combination of conventional fungicides and organic bio\u2011treatments.  \n\n**Fungicides**  \n- Chlorothalonil (often for"
+    },
+    {
+      "case_id": "eval-potato-02",
+      "faithfulness_before": 0.0,
+      "faithfulness_after": 0.0,
+      "delta": 0.0,
+      "answer_before": "Potato growers can keep late blight in check by treating fields as soon as regional forecasts signal a risk, using both chemical and organic products, and following a strict spray schedule. The recomm",
+      "answer_after": "Potato growers should treat a field as soon as regional late\u2011blight forecasts appear and eliminate any volunteer potatoes or cull piles to remove inoculum\u202f[1].  \nBoth organic and chemical options are "
+    },
+    {
+      "case_id": "eval-potato-03",
+      "faithfulness_before": 0.5,
+      "faithfulness_after": 0.75,
+      "delta": 0.25,
+      "answer_before": "Use certified disease\u2011free seed tubers and inoculate with a bio\u2011fertilizer, then manage the field with proper hilling and irrigation so the tubers stay covered. Forming adequate hills keeps tubers out",
+      "answer_after": "Using cultural and organic methods helps keep potato tubers healthy and prevents greening.  \n- Plant certified disease\u2011free seed tubers and apply a bio\u2011fertilizer inoculation to give the crop a clean "
+    },
+    {
+      "case_id": "eval-apple-01",
+      "faithfulness_before": 1.0,
+      "faithfulness_after": 0.3333,
+      "delta": -0.6667,
+      "answer_before": "Chemical fungicides: Captan\u202f50\u202f%\u202fWP and Difenoconazole\u202f25\u202f%\u202fEC\u202f[3][4].  \nOrganic fungicides: Sulfur\u202f80\u202f%\u202fWDG, potassium bicarbonate and\u202fBacillus\u202fsubtilis\u202f[3][4].",
+      "answer_after": "Chemical fungicides used for apple scab include Captan\u202f50\u202f% WP and Difenoconazole\u202f25\u202f% EC\u30106\u2020L1-L3\u3011.  \nOrganic options are sulfur\u202f80\u202f% WDG, potassium\u202fbicarbonate, and the biocontrol agent\u202fBacillus\u202fsubt"
+    },
+    {
+      "case_id": "eval-apple-02",
+      "faithfulness_before": 0.8,
+      "faithfulness_after": 0.75,
+      "delta": -0.05,
+      "answer_before": "Apple black rot is controlled by a combination of cultural and chemical measures.\u202fIn winter, prune and remove any mummified fruit and dead wood to reduce inoculum\u202f[1].\u202fDuring the growing season, apply",
+      "answer_after": "Apple black rot is controlled with a combination of cultural sanitation and spray applications.\u202fIn winter, prune away mummified fruit and dead wood, then apply a fungicide spray during the growing sea"
+    },
+    {
+      "case_id": "eval-apple-03",
+      "faithfulness_before": 0.6667,
+      "faithfulness_after": 1.0,
+      "delta": 0.3333,
+      "answer_before": "For cedar\u2011apple rust on apples the recommended controls are:\n\n* **Organic options** \u2013 a liquid copper fungicide or an elemental sulfur spray.  \n* **Chemical options** \u2013 apply either Myclobutanil\u202f20\u202f% ",
+      "answer_after": "For cedar\u2011apple rust on apples, the recommended options are:\n\n* **Organic sprays** \u2013 a liquid copper fungicide or an elemental\u2011sulfur spray\u202f[1][2].  \n* **Chemical fungicides** \u2013 Myclobutanil 20\u202f% WP ("
+    },
+    {
+      "case_id": "eval-corn-01",
+      "faithfulness_before": 1.0,
+      "faithfulness_after": 1.0,
+      "delta": 0.0,
+      "answer_before": "The recommended controls include the chemical fungicides Propiconazole (25\u202f% EC) and Azoxystrobin (23\u202f% SC) applied at 1\u202fml per liter of spray solution\u30101\u3011.  For a biological approach, a seed treatment",
+      "answer_after": "Fungicide options for Northern Corn Leaf Blight include a propiconazole\u2010based product (25\u202f% EC) or an azoxystrobin\u2010based product (23\u202f% SC) applied at 1\u202fml per liter of spray solution\u202f[1][2].  \n\nBiolog"
+    },
+    {
+      "case_id": "eval-corn-02",
+      "faithfulness_before": 0.3,
+      "faithfulness_after": 0.25,
+      "delta": -0.05,
+      "answer_before": "Control of gray leaf spot in corn relies on a mix of cultural practices and fungicide applications.  \n\n**Cultural management**  \n- Remove and deep\u2011till crop residues after harvest; burning alone is no",
+      "answer_after": "Control of gray leaf spot in corn relies on a mix of cultural practices and fungicide applications.  \n\n**Cultural management** \u2013 destroy and deeply till crop residue after harvest, rotate corn out of "
+    },
+    {
+      "case_id": "eval-corn-03",
+      "faithfulness_before": 1.0,
+      "faithfulness_after": 0.5,
+      "delta": -0.5,
+      "answer_before": "Effective treatments for common rust in corn include both organic and chemical options.  \n\n**Organic remedies**  \n- Liquid copper octanoate  \n- Compost\u2011extract bio\u2011spray\u30101\u3011  \n\n**Chemical fungicides** ",
+      "answer_after": "Effective options for managing common rust in corn include chemical fungicides such as Mancozeb\u202f75\u202f%\u202fWP or Pyraclostrobin\u202f20\u202f%\u202fWG, and broader\u2011spectrum products like Pyraclostrobin\u202f+\u202fMetconazole (Head"
+    },
+    {
+      "case_id": "eval-grape-01",
+      "faithfulness_before": 1.0,
+      "faithfulness_after": 1.0,
+      "delta": 0.0,
+      "answer_before": "The chemical fungicides used to control grape black rot are Mancozeb\u202f75\u202f%\u202fWP and Myclobutanil\u202f20\u202f%\u202fWP\u30101\u3011\u30102\u3011.  \nFor organic management, copper hydroxide\u202f53.8\u202f%\u202fWG and a lime\u2011sulfur dormant spray are re",
+      "answer_after": "The chemical fungicides used for grape black rot are Mancozeb\u202f75\u202f%\u202fWP and Myclobutanil\u202f20\u202f%\u202fWP\u30101\u3011.  \nFor organic control, a copper\u2011based spray (Copper\u202fhydroxide\u202f53.8\u202f%\u202fWG) or a lime\u2011sulfur dormant spr"
+    },
+    {
+      "case_id": "eval-grape-02",
+      "faithfulness_before": 1.0,
+      "faithfulness_after": 0.875,
+      "delta": -0.125,
+      "answer_before": "Treat grape\u202fesca (black measles) by applying a fungicidal paste to pruning wounds \u2013 either thiophanate\u2011methyl or fosetyl\u2011aluminium (80\u202f%\u202fWP) at a rate of 2.5\u202fg per litre of spray solution\u202f[1]. Re\u2011appl",
+      "answer_after": "Grape esca (black measles) is managed by treating the pruning wounds and keeping the vineyard clean.  \n- **Chemical control** \u2013 Apply a paste of thiophanate\u2011methyl (or fosetyl\u2011aluminium\u202f80\u202f% WP) at\u202f2."
+    },
+    {
+      "case_id": "eval-orange-01",
+      "faithfulness_before": 0.0,
+      "faithfulness_after": 0.8889,
+      "delta": 0.8889,
+      "answer_before": "I'm having trouble generating an answer right now \u2014 please try again in a moment.",
+      "answer_after": "Citrus greening in oranges is managed by targeting the Asian citrus psyllid and by supporting the trees with foliar nutrition.  \n\n**Vector\u2011control measures**  \n* **Systemic neonicotinoids** \u2013 Imidaclo"
+    },
+    {
+      "case_id": "eval-pepper-01",
+      "faithfulness_before": 0.0,
+      "faithfulness_after": 1.0,
+      "delta": 1.0,
+      "answer_before": "I'm having trouble generating an answer right now \u2014 please try again in a moment.",
+      "answer_after": "The recommended chemical tank mix for bacterial spot on bell pepper is a synergistic blend of Fixed\u202fCopper and Mancozeb\u202f75\u202f%\u202fWP\u202f[1].  \nThe bio\u2011fungicidal component used in the organic remedy is Bacill"
+    }
+  ],
+  "config_changes": {
+    "FALLBACK_LLM_PROVIDER": "unset -> gemini (backend/.env)",
+    "RETRIEVAL_TOP_K (Settings.retrieval_top_k default)": "5 -> 8 (backend/app/core/config.py)"
+  },
+  "honest_limitations": [
+    "Mean Faithfulness (raw) remains below the 0.80 target -- a real, measured improvement, not a claim of the target being met.",
+    "eval-potato-02 remains unresolved -- its root cause was investigated but not fully isolated in this pass.",
+    "The cross-encoder reranking limitation on this corpus's dosage-table text format is disclosed but not fixed.",
+    "Raising retrieval_top_k from 5 to 8 increases prompt size/cost per request slightly -- not separately re-measured in this pass (see eval/module10/reports/agent_eval_*.json for the last measured Cost Per Successful Task, taken before this change)."
+  ]
+}

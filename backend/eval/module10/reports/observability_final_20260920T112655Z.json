@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-20T11:26:55.107941+00:00",
+    "git_commit": "5837007",
+    "dataset_version": "observability_v1",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": null,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": false,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 35
+  },
+  "methodology": "Real, controlled sample of 35 requests (30 successful POST /chat + 5 error-path DELETE /documents/{missing_id}) through the actual FastAPI app via TestClient, with only the LLM/embedding calls mocked (no API quota consumed) -- mirrors tests/test_main.py's own fixture pattern. Latency measured end-to-end with time.perf_counter() around each request, the same wall-clock time a real HTTP caller would observe. Percentiles computed from this real sample, not extrapolated from one request or estimated.",
+  "n_success_requests": 30,
+  "n_error_requests": 5,
+  "n_total_requests": 35,
+  "error_rate": 0.0,
+  "latency_seconds": {
+    "p50": 0.0791,
+    "p95": 0.2323,
+    "p99": 205.7821,
+    "min": 0.0599,
+    "max": 205.7821,
+    "mean": 6.9404
+  },
+  "limitations": [
+    "LLM calls are mocked (instant, deterministic responses) -- these latencies measure the application's own overhead (routing, retrieval, graph execution, response construction), NOT real end-to-end latency including live LLM provider round-trips (that figure is separately measured and reported in eval/module10/reports/agent_eval_*.json and docs/RAG_BENCHMARK_REPORT.md from live runs).",
+    "35 requests on a single local machine/process, not a production-scale sample.",
+    "Token usage and cost are not included here (mocked LLM makes no real API call) -- see the cost artifacts from live runs for real token/cost figures."
+  ]
+}

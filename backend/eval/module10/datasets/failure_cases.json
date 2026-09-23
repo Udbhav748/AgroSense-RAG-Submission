@@ -1,0 +1,102 @@
+{
+  "dataset_version": "module10_v1",
+  "_schema_note": "Every case here is executed with a deterministic mock/monkeypatch — no real provider outage is ever caused. Each case names the exact injection point (module.function to monkeypatch) so run_failure_eval.py's implementation is traceable to this spec, not ad hoc.",
+  "cases": [
+    {
+      "id": "fail_001",
+      "category": "llm_timeout",
+      "injection_point": "app.services.gemini_client.GeminiClient.generate (or groq_client, per active provider) raises LLMTimeoutError",
+      "expected_detection": "AppError caught by the global handler (core/error_handlers.py), taxonomy_category='tool'",
+      "expected_recovery": "tenacity retry (up to 3 attempts) exhausted -> mapped HTTP error status, not a hang or unhandled 500 traceback",
+      "root_cause_category": "tool"
+    },
+    {
+      "id": "fail_002",
+      "category": "llm_rate_limit",
+      "injection_point": "LLM client raises a 429-shaped LLMAPIError",
+      "expected_detection": "same AppError path as fail_001",
+      "expected_recovery": "retry per tenacity config; exhausted retries surface a clean error, not a corrupted partial answer",
+      "root_cause_category": "tool"
+    },
+    {
+      "id": "fail_003",
+      "category": "llm_provider_error",
+      "injection_point": "LLM client raises a generic 5xx-shaped LLMAPIError",
+      "expected_detection": "AppError, taxonomy 'tool'",
+      "expected_recovery": "same as fail_001/002",
+      "root_cause_category": "tool"
+    },
+    {
+      "id": "fail_004",
+      "category": "retrieval_timeout",
+      "injection_point": "app.services.retrieval_service.retrieve raises (simulating a vector-store timeout)",
+      "expected_detection": "agent_graph/nodes.py::retrieval_node re-raises (does NOT silently degrade — this was a real bug found and fixed during Phase 1, see git history) rather than swallowing the exception",
+      "expected_recovery": "propagates to ChatServiceError (500) for /chat, or an SSE error event for /chat/stream",
+      "root_cause_category": "retriever"
+    },
+    {
+      "id": "fail_005",
+      "category": "vector_store_failure",
+      "injection_point": "context.vector_store is None when retrieval_node runs",
+      "expected_detection": "retrieval_node's explicit pre-check (the one intentional degrade case, distinct from fail_004)",
+      "expected_recovery": "state.error_type='retriever', root_cause='vector_store_unavailable', workflow terminates safely with a fallback answer rather than crashing",
+      "root_cause_category": "retriever"
+    },
+    {
+      "id": "fail_006",
+      "category": "reranker_failure",
+      "injection_point": "app.services.reranking_service cross-encoder call raises",
+      "expected_detection": "existing degrade-on-rerank-failure path in retrieval_service.retrieve (falls back to unranked hybrid/vector results)",
+      "expected_recovery": "request still completes with un-reranked chunks, not a hard failure",
+      "root_cause_category": "tool"
+    },
+    {
+      "id": "fail_007",
+      "category": "web_search_failure",
+      "injection_point": "app.services.web_search_service.search_web raises WebSearchError",
+      "expected_detection": "ChatService._search_web catches WebSearchError, logs web_search_failed",
+      "expected_recovery": "degrades to an empty result list; the corrective loop proceeds without web context rather than failing the whole request",
+      "root_cause_category": "tool"
+    },
+    {
+      "id": "fail_008",
+      "category": "vision_service_timeout",
+      "injection_point": "app.services.vision_client.diagnose_image raises VisionServiceError",
+      "expected_detection": "agent_graph/nodes.py::vision_node re-raises (Phase 1 fix — no fallback path exists for a failed diagnosis, so it must not silently degrade)",
+      "expected_recovery": "propagates as a clean error to handle_diagnose's caller",
+      "root_cause_category": "tool"
+    },
+    {
+      "id": "fail_009",
+      "category": "invalid_structured_output",
+      "injection_point": "LLM's generate_structured() returns malformed/non-JSON-parseable output",
+      "expected_detection": "structured_output.parse_structured_answer returns None (never raises)",
+      "expected_recovery": "ChatService._generate_structured falls back to the plain free-text _generate path — structured output is a win-when-it-works enhancement, never a new failure mode",
+      "root_cause_category": "output"
+    },
+    {
+      "id": "fail_010",
+      "category": "approval_rejection",
+      "injection_point": "approval_service.ApprovalStore.resolve(approved=False) on a pending web_search/document_delete approval",
+      "expected_detection": "human_approval_node observes approval_status='rejected'",
+      "expected_recovery": "route_after_approval returns 'safe_finalizer', never 'resume' — the guarded action never executes",
+      "root_cause_category": "input"
+    },
+    {
+      "id": "fail_011",
+      "category": "loop_cap_reached",
+      "injection_point": "monkeypatch rag_service._MAX_LLM_CALLS down to a value already exceeded by a query needing >2 regenerations, or force build_chat_graph(max_steps=1)",
+      "expected_detection": "engine.py logs graph_cycle_capped_max_steps; core/metrics.py agent_loop_limit_hits_total increments",
+      "expected_recovery": "returns whatever answer exists at the cap, does not loop indefinitely",
+      "root_cause_category": "reasoning"
+    },
+    {
+      "id": "fail_012",
+      "category": "malformed_input",
+      "injection_point": "POST /chat with an empty query string, or a query exceeding any configured length limit",
+      "expected_detection": "validate_request_node rejects empty query (workflow_status='failed', termination_reason='validation_failure') / Pydantic request validation for length limits",
+      "expected_recovery": "clean 422/400, no traceback",
+      "root_cause_category": "input"
+    }
+  ]
+}

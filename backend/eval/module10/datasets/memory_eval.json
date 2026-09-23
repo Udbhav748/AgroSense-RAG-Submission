@@ -1,0 +1,83 @@
+{
+  "dataset_version": "module10_v1",
+  "_schema_note": "retention/irrelevance cases run through ChatService.handle_query with explicit history (live LLM call, measures whether the model actually uses injected memory). session_boundary/cross_session_leakage cases exercise app.services.session_store.InMemorySessionStore / app.services.agent_memory.AgentMemory directly (deterministic, no LLM call) — they test the store's isolation guarantee, not generation quality.",
+  "retention_cases": [
+    {
+      "id": "mem_001",
+      "history": [
+        {"role": "user", "content": "The crop we're discussing is tomato."},
+        {"role": "assistant", "content": "Understood, tomato."},
+        {"role": "user", "content": "The disease was first noticed yesterday on the lower leaves."},
+        {"role": "assistant", "content": "Noted — lower-leaf onset, observed yesterday."}
+      ],
+      "query": "What crop are we discussing?",
+      "expected_answer_contains": ["tomato"],
+      "risk_level": "low",
+      "difficulty": "easy"
+    },
+    {
+      "id": "mem_002",
+      "history": [
+        {"role": "user", "content": "What is Earned Value Management used for?"},
+        {"role": "assistant", "content": "Earned Value Management (EVM) is used for measuring, forecasting, and reporting project performance."}
+      ],
+      "query": "Now, what was the name of the technique I asked about before?",
+      "expected_answer_contains": ["earned value", "evm"],
+      "risk_level": "low",
+      "difficulty": "medium"
+    }
+  ],
+  "irrelevance_cases": [
+    {
+      "id": "mem_003",
+      "history": [
+        {"role": "user", "content": "I like coffee in the morning."},
+        {"role": "assistant", "content": "Good to know!"},
+        {"role": "user", "content": "My favorite color is blue."},
+        {"role": "assistant", "content": "Noted."}
+      ],
+      "query": "What is a Work Breakdown Structure?",
+      "expected_answer_contains": ["hierarchical", "work breakdown"],
+      "expected_answer_not_contains": ["coffee", "blue"],
+      "risk_level": "low",
+      "difficulty": "medium",
+      "note": "irrelevant prior turns must not leak into or alter an unrelated document answer"
+    },
+    {
+      "id": "mem_004",
+      "history": [
+        {"role": "user", "content": "I once worked on a project that failed."},
+        {"role": "assistant", "content": "That sounds difficult."}
+      ],
+      "query": "What organic remedy is recommended for apple scab?",
+      "expected_answer_contains": ["sulfur", "potassium bicarbonate"],
+      "expected_answer_not_contains": ["failed project"],
+      "risk_level": "low",
+      "difficulty": "medium"
+    }
+  ],
+  "session_boundary_cases": [
+    {
+      "id": "mem_005",
+      "type": "last_n_turns",
+      "description": "Only the last _MAX_HISTORY_TURNS (6, rag_service.py) turns should reach the prompt; a fact stated only in turn 1 of an 8-turn history should NOT be recalled by turn 9's query if it fell outside the window.",
+      "measured_by": "unit test against ChatService._inject_memory / history truncation, reusing backend/tests/test_memory_bounds.py's existing pattern"
+    },
+    {
+      "id": "mem_006",
+      "type": "session_separation",
+      "description": "Two distinct session_ids must not share history: a fact injected into session A's history must not be recoverable from a fresh query on session B.",
+      "measured_by": "app.services.session_store.InMemorySessionStore — create two sessions, add a turn to A, assert get_history(B) is empty/unaffected"
+    }
+  ],
+  "cross_session_leakage_cases": [
+    {
+      "id": "mem_007",
+      "description": "A fact or PII-like value stored under tenant/session A must never be retrievable by a query issued under tenant/session B.",
+      "expected_cross_session_leak_rate": 0,
+      "measured_by": "app.services.agent_memory.AgentMemory — store a fact under session A, query build_context for session B, assert the fact is absent",
+      "risk_level": "high",
+      "note": "desired result is exactly 0 leaked facts across all cross-session attempts in this case set; any leak is a hard fail, not a rate to average away"
+    }
+  ]
+}

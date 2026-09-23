@@ -1,0 +1,109 @@
+{
+  "dataset_version": "module10_v1",
+  "_schema_note": "Some cases here reference rag_eval.json/agent_eval.json/security_eval.json cases by id rather than duplicating them (e.g. rag_009 'ambiguous disease name' already lives in rag_eval.json) — duplicating case content across datasets would let a single bug be silently double-counted as two passes or two failures. New cases not already covered elsewhere are defined in full below.",
+  "rag_hard_cases": [
+    {"id": "hard_rag_001", "ref": "rag_009", "category": "ambiguous_disease_name"},
+    {"id": "hard_rag_002", "ref": "rag_015", "category": "out_of_corpus_plausible"},
+    {"id": "hard_rag_003", "ref": "rag_012", "category": "rare_terminology"},
+    {"id": "hard_rag_004", "ref": "rag_025", "category": "poorly_worded_query"},
+    {"id": "hard_rag_005", "ref": "rag_011", "category": "requires_two_source_chunks"},
+    {
+      "id": "hard_rag_006",
+      "category": "wrong_crop",
+      "query": "What organic remedy does the document recommend for tomato scab?",
+      "expected_action": "retrieve",
+      "risk_level": "medium",
+      "difficulty": "hard",
+      "note": "'scab' in this corpus only has an apple entry (apple scab) — tomato scab is not a real disease in the indexed treatment table. A correct answer either says apple scab's remedy is the closest match and flags the crop mismatch, or declines; presenting apple scab's remedy AS IF it were for tomato is the failure mode this case targets."
+    },
+    {
+      "id": "hard_rag_007",
+      "category": "misleading_document",
+      "query": "The HR interview guide document says the candidate has 10 years of professional experience — how many years is it?",
+      "expected_action": "retrieve",
+      "expected_fallback": true,
+      "risk_level": "medium",
+      "difficulty": "hard",
+      "note": "the premise embedded in the question (10 years) is not asserted by the actual indexed document (a B.Tech student's interview-prep guide, prepared 2022-2026) — tests whether the model corrects/declines rather than confirming a false premise baked into the question"
+    }
+  ],
+  "agent_hard_cases": [
+    {"id": "hard_agent_001", "ref": "agent_011", "category": "multi_step_task"},
+    {"id": "hard_agent_002", "ref": "agent_plan_002", "category": "retrieval_failure_recovery"},
+    {
+      "id": "hard_agent_003",
+      "category": "ambiguous_intent",
+      "query": "tell me about scab",
+      "expected_action": "retrieve",
+      "risk_level": "medium",
+      "difficulty": "hard",
+      "note": "no verb clarity (retrieve vs. summarize vs. conversational are all superficially plausible readings) — correct planner routing is retrieve (matches rag_009's disambiguation challenge, but stresses the PLANNER's routing decision specifically rather than the generator's answer)"
+    },
+    {
+      "id": "hard_agent_004",
+      "category": "incorrect_tool_temptation",
+      "query": "Can you search the web for the latest tomato blight outbreak news?",
+      "expected_action": "research",
+      "risk_level": "medium",
+      "difficulty": "hard",
+      "note": "explicitly names 'search the web' — a planner that always defaults to retrieve regardless of explicit web-search intent would misroute this; correct behavior depends on Settings.web_search_enabled/agent_routing_enabled actually being able to select 'research'"
+    },
+    {
+      "id": "hard_agent_005",
+      "category": "repeated_correction",
+      "description": "A query where the initial answer is ungrounded (empty/fallback-equivalent despite available chunks), forcing ChatService._correct's full escalation path: regenerate -> still ungrounded -> web-fallback regenerate -> cap at _MAX_LLM_CALLS=3.",
+      "measured_by": "backend/tests/test_rag_service.py::TestCorrectiveLoop (existing, reused) + run_agent_eval.py's loop_rate metric from the live agent_workflow registry",
+      "risk_level": "low",
+      "difficulty": "hard"
+    },
+    {
+      "id": "hard_agent_006",
+      "category": "tool_failure",
+      "description": "retrieve() raises mid-request (see failure_cases.json's retrieval_failure scenario) — the agent-hard question is whether the workflow surfaces a clean 500/error rather than a corrupted partial answer.",
+      "ref_failure_case": "fail_002"
+    },
+    {
+      "id": "hard_agent_007",
+      "category": "model_failure",
+      "description": "LLM call raises (timeout/429/provider error) mid-generation — see failure_cases.json's llm_* scenarios.",
+      "ref_failure_case": "fail_001"
+    }
+  ],
+  "multimodal_hard_cases": [
+    {
+      "id": "hard_mm_001",
+      "category": "low_quality_image",
+      "description": "A diagnose request with a heavily blurred/low-resolution leaf photo.",
+      "expected_behavior": "low_confidence=True on the VisionPrediction, or a graceful degradation message — not a confidently wrong diagnosis",
+      "measured_by": "manual/live smoke test only in this phase (no live camera-quality test image corpus exists in this repo) — see MODULE10_RESULTS.md for disclosure if not executed"
+    },
+    {
+      "id": "hard_mm_002",
+      "category": "healthy_leaf",
+      "description": "A diagnose request with a genuinely healthy leaf photo (no disease present).",
+      "expected_behavior": "prediction.disease == 'healthy', RAG answer discusses preventive/maintenance care rather than inventing a disease",
+      "measured_by": "manual/live smoke test"
+    },
+    {
+      "id": "hard_mm_003",
+      "category": "unsupported_disease",
+      "description": "A diagnose request for a crop/disease combination not present in the LeafSense model's trained classes.",
+      "expected_behavior": "low-confidence prediction or explicit out-of-scope signal, not a fabricated class label",
+      "measured_by": "manual/live smoke test"
+    },
+    {
+      "id": "hard_mm_004",
+      "category": "no_useful_visual_evidence",
+      "description": "An image containing no plant material at all (e.g. a photo of a wall).",
+      "expected_behavior": "low-confidence/rejection rather than a forced classification into the nearest trained class",
+      "measured_by": "manual/live smoke test"
+    },
+    {
+      "id": "hard_mm_005",
+      "category": "diagnosis_conflicting_with_text",
+      "description": "Vision predicts crop=apple/disease=apple scab, but the accompanying user text claims 'this is my tomato plant'.",
+      "expected_behavior": "the RAG answer should be grounded in the vision prediction (apple/apple scab) and ideally flag the crop mismatch, not silently answer as if it were tomato",
+      "measured_by": "manual/live smoke test"
+    }
+  ]
+}

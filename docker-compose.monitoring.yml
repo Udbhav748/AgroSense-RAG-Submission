@@ -1,0 +1,73 @@
+name: insightai-monitoring
+
+# Feature #4 — production-grade observability for the deployed backend.
+# Brings up the scraping/alerting/visualization layer that the codebase's
+# dependency-free /metrics endpoint (app/core/metrics.py) is designed to
+# feed: Prometheus scrapes GET /metrics (the in-process registry described
+# in backend/monitoring/README.md), Alertmanager routes rule fires, and
+# Grafana auto-provisions the four dashboards in
+# monitoring/grafana/dashboards/ — no manual import needed.
+#
+# Usage:
+#   docker compose -f docker-compose.monitoring.yml up -d
+#   open http://localhost:3000  (admin/admin)
+#
+# The backend is expected to run on the host at localhost:8000 (dev) — see
+# prometheus.yml's host.docker.internal target — or as the `backend`
+# service on this same compose network if you extend this file.
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: insightai-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    extra_hosts:
+      # Dev-only: lets Prometheus reach a backend running on the host.
+      - "host.docker.internal:host-gateway"
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: insightai-alertmanager
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --log.level=debug
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "9093:9093"
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: insightai-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      # Auto-provision the Prometheus datasource + the four dashboards.
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:

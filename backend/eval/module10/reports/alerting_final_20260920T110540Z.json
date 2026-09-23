@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "git_commit": "a8993117fc34854d6c957a0f0e31941254f96f26",
+    "timestamp": "20260920T110540Z",
+    "command": "pytest tests/test_alerting.py -q"
+  },
+  "scope": "Threshold-based alerting engine (app/core/alerting.py): rule definitions, threshold evaluation, alert-event creation, debounce, recovery events, pluggable notification sink (webhook adapter + mock sink).",
+  "boundary_disclosure": "Fully implemented and tested LOCALLY. NOT continuously invoked against a live production target -- no persistent deployment exists for it to monitor (same reason .github/workflows/health-monitor.yml is inert by design). Wiring this engine to a real periodic metrics poll against a live deployment is future work.",
+  "default_rules": [
+    "high_error_rate (>0.05, 60s debounce)",
+    "high_p95_latency (>3.0s, 60s debounce)",
+    "health_check_down (<0.5, 30s debounce)",
+    "cost_threshold_exceeded (>/usr/bin/bash.01/request, 300s debounce)"
+  ],
+  "deterministic_test_cases": [
+    {
+      "case": "below_threshold",
+      "events": 0
+    },
+    {
+      "case": "crosses_threshold",
+      "events": 1,
+      "kind": "alert"
+    },
+    {
+      "case": "repeated_within_debounce",
+      "events": 0
+    },
+    {
+      "case": "recovers",
+      "events": 1,
+      "kind": "recovery"
+    },
+    {
+      "case": "sink_failure_handled_safely",
+      "events": 1,
+      "raised_exception": false
+    }
+  ],
+  "tests": {
+    "file": "backend/tests/test_alerting.py",
+    "result": "9/9 passed"
+  },
+  "current_status": "PARTIAL (engine implemented and tested; continuous production delivery not active without a deployment target)"
+}

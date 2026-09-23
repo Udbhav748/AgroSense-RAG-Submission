@@ -1,0 +1,80 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-19T11:03:29.948320+00:00",
+    "git_commit": "28fc722",
+    "dataset_version": "module10_v1",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": null,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": false,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 4
+  },
+  "status": "MEASURED (synthetic images \u2014 pipeline robustness only, NOT diagnostic accuracy)",
+  "leafsense_online": true,
+  "per_case": [
+    {
+      "case_id": "mm_001",
+      "category": "synthetic_diseased_like",
+      "description": "Synthetic green ellipse with brown dot 'spots' and vein lines \u2014 simulates gross diseased-leaf structure, not a real disease.",
+      "success": true,
+      "raw_class": "Corn_(maize)___healthy",
+      "crop": "corn",
+      "disease": "healthy",
+      "confidence": 0.978434681892395,
+      "low_confidence": false,
+      "engine": "leafsense",
+      "latency_ms": 12640.49
+    },
+    {
+      "case_id": "mm_002",
+      "category": "low_quality_image",
+      "description": "Same synthetic image, downsampled and heavily Gaussian-blurred, saved at quality=15 \u2014 simulates a poor-quality photo.",
+      "success": true,
+      "raw_class": "Corn_(maize)___healthy",
+      "crop": "corn",
+      "disease": "healthy",
+      "confidence": 0.9999827146530151,
+      "low_confidence": false,
+      "engine": "leafsense",
+      "latency_ms": 526.92
+    },
+    {
+      "case_id": "mm_003",
+      "category": "healthy_leaf_like",
+      "description": "Synthetic uniform green ellipse, no spots \u2014 simulates a healthy-leaf-like image.",
+      "success": true,
+      "raw_class": "Corn_(maize)___healthy",
+      "crop": "corn",
+      "disease": "healthy",
+      "confidence": 0.9951722025871277,
+      "low_confidence": false,
+      "engine": "leafsense",
+      "latency_ms": 617.62
+    },
+    {
+      "case_id": "mm_004",
+      "category": "no_useful_visual_evidence",
+      "description": "Plain uniform gray image \u2014 no plant structure at all.",
+      "success": true,
+      "raw_class": "Tomato___Target_Spot",
+      "crop": "tomato",
+      "disease": "target spot",
+      "confidence": 0.4454745352268219,
+      "low_confidence": true,
+      "engine": "leafsense",
+      "latency_ms": 6653.44
+    }
+  ]
+}

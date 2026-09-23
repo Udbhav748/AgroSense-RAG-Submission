@@ -1,0 +1,36 @@
+# Production overlay for a plain EC2 instance. Used together with the base
+# file, never alone:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# What this changes vs. the base (dev) file:
+# - restart: unless-stopped everywhere, so the stack comes back up on its
+#   own after an instance reboot or a Docker daemon restart — the base file
+#   has no restart policy at all (fine for a dev laptop, not for a server).
+# - Postgres and LeafSense are no longer published on the instance's public
+#   interface. The base file publishes 5432/8001 so a backend running
+#   natively on a dev machine (outside Compose) can reach them; on a
+#   server, nothing outside this Compose network ever needs to — LeafSense
+#   is only ever called by AgroSense-RAG's own backend, never directly by
+#   a client. `!reset []` is the Compose Specification's explicit "clear
+#   this list" merge tag — ports (like most list-valued keys) concatenate
+#   across -f files by default, so just writing `ports: []` here would
+#   NOT remove the base file's mapping, it would sit alongside it and
+#   still publish the port.
+# - Backend/frontend keep the base file's published ports (8000, 8080) so
+#   the stack is reachable by IP:port with zero extra setup. Add
+#   docker-compose.caddy.yml on top once a domain is pointed at the
+#   instance, for TLS and port 80/443 access instead.
+services:
+  postgres:
+    restart: unless-stopped
+    ports: !reset []
+
+  leafsense:
+    restart: unless-stopped
+    ports: !reset []
+
+  backend:
+    restart: unless-stopped
+
+  frontend:
+    restart: unless-stopped

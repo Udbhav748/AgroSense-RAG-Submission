@@ -1,0 +1,87 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-19T10:44:07.005348+00:00",
+    "git_commit": "28fc722",
+    "dataset_version": "module10_v1",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": null,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": false,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 4
+  },
+  "retention": {
+    "memory_recall_rate": 0.0,
+    "irrelevance_pass_rate": 1.0,
+    "n": 2,
+    "per_case": [
+      {
+        "case_id": "mem_001",
+        "query": "What crop are we discussing?",
+        "answer": "I couldn't find that information in the uploaded documents.",
+        "recalled_expected": false,
+        "leaked_irrelevant_content": false,
+        "pass": false
+      },
+      {
+        "case_id": "mem_002",
+        "query": "Now, what was the name of the technique I asked about before?",
+        "answer": "I couldn't find that information in the uploaded documents.",
+        "recalled_expected": false,
+        "leaked_irrelevant_content": false,
+        "pass": false
+      }
+    ]
+  },
+  "irrelevance": {
+    "memory_recall_rate": 1.0,
+    "irrelevance_pass_rate": 1.0,
+    "n": 2,
+    "per_case": [
+      {
+        "case_id": "mem_003",
+        "query": "What is a Work Breakdown Structure?",
+        "answer": "A Work Breakdown Structure (WBS) is a hierarchical decomposition of the total project scope into smaller, more manageable components called work packages\u202f[1][2].",
+        "recalled_expected": true,
+        "leaked_irrelevant_content": false,
+        "pass": true
+      },
+      {
+        "case_id": "mem_004",
+        "query": "What organic remedy is recommended for apple scab?",
+        "answer": "The recommended organic remedies for apple scab are sulfur\u202f80\u202f%\u202fWDG, potassium bicarbonate, and\u202fBacillus\u202fsubtilis\u30101\u3011\u30102\u3011.",
+        "recalled_expected": true,
+        "leaked_irrelevant_content": false,
+        "pass": true
+      }
+    ]
+  },
+  "session_boundary": {
+    "last_n_turns": {
+      "turns_retained": 6,
+      "max_turns_per_session": 6,
+      "pass": true
+    },
+    "session_separation": {
+      "session_b_sees_session_a_history": false,
+      "pass": true
+    }
+  },
+  "cross_session_leakage": {
+    "cross_session_leak_rate": 0.0,
+    "leaked": false,
+    "expected": 0,
+    "pass": true
+  }
+}

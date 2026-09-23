@@ -1,0 +1,76 @@
+{
+  "name": "AgroSense-RAG & LeafSense",
+  "short_name": "AgroSense",
+  "description": "Progressive Web App for offline-resilient agricultural pathology diagnosis, spray dosage calculation, and PDF agronomic RAG assistant.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0b0d",
+  "theme_color": "#0b0b0d",
+  "categories": ["agriculture", "productivity", "utilities", "education"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Plant Leaf Diagnostics",
+      "short_name": "Diagnose",
+      "description": "Diagnose plant leaf diseases and calculate chemical spray dosages",
+      "url": "/diagnose",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.svg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Agronomic RAG Chat",
+      "short_name": "Chat",
+      "description": "Chat with agricultural PDF documents and extension manuals",
+      "url": "/chat",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.svg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Documents Library",
+      "short_name": "Documents",
+      "description": "Manage agricultural PDFs and extension manuals",
+      "url": "/documents",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.svg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "System Architecture",
+      "short_name": "Architecture",
+      "description": "Inspect microservices, vision pipeline, and hybrid arbiters",
+      "url": "/architecture",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.svg",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

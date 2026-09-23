@@ -1,0 +1,132 @@
+{
+  "audit_date": "2026-09-19",
+  "git_commit": "28fc722",
+  "items": [
+    {
+      "requirement": "Hybrid Search",
+      "status": "verified",
+      "implementation": ["backend/app/services/hybrid_search.py", "backend/app/services/retrieval_service.py"],
+      "tests": ["backend/eval/module10/runners/run_rag_eval.py"],
+      "result_file": "backend/eval/module10/reports/rag_eval_20260919T103118Z.json"
+    },
+    {
+      "requirement": "Cross-encoder Reranking",
+      "status": "verified",
+      "implementation": ["backend/app/services/reranking_service.py"],
+      "tests": ["backend/eval/module10/runners/run_rag_eval.py"],
+      "result_file": "backend/eval/module10/reports/rag_eval_20260919T103118Z.json"
+    },
+    {
+      "requirement": "Retrieval Metrics (P@5/Recall@5/Hit@5/MRR)",
+      "status": "verified",
+      "implementation": ["backend/eval/run_eval.py"],
+      "tests": ["backend/eval/module10/runners/run_rag_eval.py", "backend/eval/module10/metrics/retrieval.py"],
+      "result_file": "backend/eval/module10/reports/rag_eval_20260919T103118Z.json"
+    },
+    {
+      "requirement": "Groundedness",
+      "status": "verified",
+      "implementation": ["backend/eval/run_eval.py::is_grounded", "backend/eval/module10/metrics/groundedness.py"],
+      "tests": ["backend/eval/module10/runners/run_rag_eval.py"],
+      "result_file": "backend/eval/module10/reports/rag_eval_20260919T103118Z.json",
+      "note": "Lexical proxy + claim-decomposition, both explicitly labeled as proxies, not ground truth."
+    },
+    {
+      "requirement": "Citation Accuracy",
+      "status": "verified",
+      "implementation": ["backend/eval/run_eval.py::citation_supported"],
+      "tests": ["backend/eval/module10/runners/run_rag_eval.py"],
+      "result_file": "backend/eval/module10/reports/rag_eval_20260919T103118Z.json"
+    },
+    {
+      "requirement": "Planner / Tool Selection Classification",
+      "status": "verified",
+      "implementation": ["backend/app/services/rag_service.py::ChatService._plan"],
+      "tests": ["backend/eval/module10/runners/run_agent_eval.py", "backend/eval/module10/metrics/classification.py"],
+      "result_file": "backend/eval/module10/reports/agent_eval_20260919T103533Z.json"
+    },
+    {
+      "requirement": "Tool Argument Accuracy",
+      "status": "partial",
+      "implementation": ["backend/app/services/rag_service.py"],
+      "tests": ["backend/eval/module10/runners/run_agent_eval.py"],
+      "result_file": "backend/eval/module10/reports/agent_eval_20260919T103533Z.json",
+      "note": "Only summarize's document_id is applicable/measurable (n=2); retrieve's top_k and diagnose are documented not_applicable, not fabricated."
+    },
+    {
+      "requirement": "Planning (multi-step)",
+      "status": "not_verified",
+      "implementation": ["backend/app/services/agent_graph/"],
+      "tests": ["backend/eval/module10/runners/run_agent_eval.py"],
+      "result_file": "backend/eval/module10/reports/agent_eval_20260919T103533Z.json",
+      "note": "NOT MEASURED: ChatResponse does not expose the internal node sequence needed for expected-vs-actual step-order comparison."
+    },
+    {
+      "requirement": "Memory",
+      "status": "partial",
+      "implementation": ["backend/app/services/agent_memory.py", "backend/app/services/session_store.py"],
+      "tests": ["backend/eval/module10/runners/run_memory_eval.py"],
+      "result_file": "backend/eval/module10/reports/memory_eval_20260919T104407Z.json",
+      "note": "Session boundary/cross-session-leakage: verified, 0 leaks. Pure conversational recall (no document backing): measured 0/2, traced to prompt_builder's document-only-context design, not a defect."
+    },
+    {
+      "requirement": "Workflow Completion Rate / Node Success Rate / Average Node Latency / Loop Rate",
+      "status": "verified",
+      "implementation": ["backend/app/core/metrics.py::Metrics.agent_workflow_summary"],
+      "tests": ["backend/eval/module10/runners/run_agent_eval.py"],
+      "result_file": "backend/eval/module10/reports/agent_eval_20260919T103533Z.json"
+    },
+    {
+      "requirement": "PII Recall",
+      "status": "verified",
+      "implementation": ["backend/app/services/pii_service.py"],
+      "tests": ["backend/eval/pii_recall_check.py", "backend/eval/module10/runners/run_security_eval.py"],
+      "result_file": "backend/eval/module10/reports/security_eval_20260919T103952Z.json"
+    },
+    {
+      "requirement": "Unauthorized Access Rate",
+      "status": "verified_with_finding",
+      "implementation": ["backend/app/core/permissions.py"],
+      "tests": ["backend/eval/unauthorized_access_check.py", "backend/eval/module10/runners/run_security_eval.py"],
+      "result_file": "backend/eval/module10/reports/security_eval_20260919T103952Z.json",
+      "note": "Measured 0.3333, not 0 — a same-tenant member-role delete succeeds by the implemented design (permissions.py), while the existing test expected it denied. Real, disclosed discrepancy, not fabricated as 0."
+    },
+    {
+      "requirement": "Prompt Injection / Jailbreak Success Rate",
+      "status": "verified",
+      "implementation": ["backend/app/services/prompt_builder.py", "backend/app/services/prompt_injection_service.py"],
+      "tests": ["backend/eval/module10/runners/run_security_eval.py"],
+      "result_file": "backend/eval/module10/reports/security_eval_20260919T103952Z.json"
+    },
+    {
+      "requirement": "False Refusal Rate / Data Leak Rate",
+      "status": "verified",
+      "implementation": ["backend/app/services/rag_service.py"],
+      "tests": ["backend/eval/module10/runners/run_security_eval.py"],
+      "result_file": "backend/eval/module10/reports/security_eval_20260919T103952Z.json"
+    },
+    {
+      "requirement": "Human Evaluation (7 dimensions)",
+      "status": "partial",
+      "implementation": ["docs/HUMAN_EVAL.md"],
+      "tests": ["manual scoring"],
+      "result_file": "docs/HUMAN_EVAL.md",
+      "note": "16 cases scored (pre-existing), 8 additional cases planned in human_eval.json but not scored in this pass. IAA = not available (one reviewer), honestly."
+    },
+    {
+      "requirement": "Failure Detection / Recovery",
+      "status": "verified",
+      "implementation": ["backend/app/services/agent_graph/nodes.py", "backend/app/services/rag_service.py"],
+      "tests": ["backend/eval/module10/runners/run_failure_eval.py"],
+      "result_file": "backend/eval/module10/reports/failure_eval_20260919T092719Z.json"
+    },
+    {
+      "requirement": "Multimodal RAG (LeafSense diagnosis, vision QA, image/table extraction)",
+      "status": "not_verified",
+      "implementation": ["backend/app/services/vision_client.py", "backend/app/services/vision_qa_service.py"],
+      "tests": [],
+      "result_file": null,
+      "note": "NOT MEASURED in this pass: no test leaf-photo corpus exists in the repository; hard_cases.json's multimodal cases are documented as manual/live-smoke-test only."
+    }
+  ]
+}

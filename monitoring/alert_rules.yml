@@ -1,0 +1,150 @@
+# Alert rules for AgroSense-RAG (Feature #4).
+# All thresholds reference the in-process registry the backend emits at
+# GET /metrics. Names follow the codebase taxonomy: retrieval grades, the
+# corrective loop cap, tool success, LLM cost. Every rule carries a
+# grafana_folder + description annotation so fired alerts render cleanly in
+# the Grafana "Alerting" UI, and dedup labels (service) keep the noise down.
+
+groups:
+  - name: rag_pipeline
+    rules:
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(
+            0.99,
+            sum by (le) (rate(http_request_duration_seconds_bucket{path="/chat"}[5m]))
+          ) > 10
+        for: 5m
+        labels:
+          severity: critical
+          service: insightai-backend
+        annotations:
+          summary: "P99 chat latency above 10s"
+          description: "P99 latency for /chat is {{ $value }}s over the last 5m."
+
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(errors_total[5m]))
+          / on() sum(rate(http_requests_total[5m])) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          service: insightai-backend
+        annotations:
+          summary: "Error rate above 1%"
+          description: "Error rate is {{ $value | humanizePercentage }} over 5m."
+
+      - alert: LoopCappedRate
+        expr: sum(rate(loop_capped_total[5m])) > 5 / 60
+        for: 10m
+        labels:
+          severity: warning
+          service: insightai-backend
+        annotations:
+          summary: "Corrective loop capping frequently"
+          description: "Corrective loop hit its cap {{ $value }} times/sec — retrieval quality likely degraded."
+
+      - alert: RetrievalTimeoutRate
+        expr: |
+          sum(rate(retrieval_timeouts_total[5m]))
+          / on() sum(rate(http_requests_total{path="/chat"}[5m])) > 0.10
+        for: 10m
+        labels:
+          severity: warning
+          service: insightai-backend
+        annotations:
+          summary: "Retrieval degrading to empty results"
+          description: "{{ $value | humanizePercentage }} of chat requests saw retrieval timeouts over 10m."
+
+  - name: agent
+    rules:
+      - alert: HighAgentFailureRate
+        expr: |
+          sum(rate(tool_invocations_total{result="error"}[5m]))
+          / on() sum(rate(tool_invocations_total[5m])) > 0.02
+        for: 10m
+        labels:
+          severity: warning
+          service: insightai-backend
+        annotations:
+          summary: "Tool failure rate above 2%"
+          description: "Tool invocations failing at {{ $value | humanizePercentage }} over 10m."
+
+      - alert: AgentHandoffSpike
+        expr: sum(rate(agent_handoffs_total[5m])) > 2
+        for: 10m
+        labels:
+          severity: warning
+          service: insightai-backend
+        annotations:
+          summary: "Unusually many agent handoffs"
+          description: "{{ $value }} handoffs/sec — possible planner oscillation."
+
+  - name: system
+    rules:
+      - alert: InstanceDown
+        expr: up{job="insightai-backend"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: insightai-backend
+        annotations:
+          summary: "Backend unreachable by Prometheus"
+          description: "The backend /metrics endpoint has been down for 5m."
+
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          service: insightai-backend
+        annotations:
+          summary: "Memory above 85%"
+          description: "Host memory utilization is {{ $value | humanizePercentage }}."
+
+      - alert: HighCPUUsage
+        expr: 100 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: insightai-backend
+        annotations:
+          summary: "CPU above 80%"
+          description: "Host CPU utilization is {{ $value }}%."
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.10
+        for: 10m
+        labels:
+          severity: warning
+          service: insightai-backend
+        annotations:
+          summary: "Disk below 10% free"
+          description: "Filesystem has {{ $value | humanizePercentage }} free."
+
+  - name: business
+    rules:
+      - alert: LowTaskSuccessRate
+        expr: |
+          sum(rate(retrieval_grades_total{grade="good"}[5m]))
+          / on() sum(rate(retrieval_grades_total[5m])) < 0.80
+        for: 15m
+        labels:
+          severity: warning
+          service: insightai-backend
+        annotations:
+          summary: "Retrieval quality low"
+          description: "Only {{ $value | humanizePercentage }} of retrievals graded good over 15m."
+
+      - alert: HighWebFallbackRate
+        expr: |
+          sum(rate(web_search_fallbacks_total[5m]))
+          / on() sum(rate(retrieval_grades_total{grade=~"weak|insufficient"}[5m])) > 0.5
+        for: 15m
+        labels:
+          severity: warning
+          service: insightai-backend
+        annotations:
+          summary: "Web fallback dominating weak retrievals"
+          description: "{{ $value | humanizePercentage }} of weak/insufficient retrievals needed web search."

@@ -1,0 +1,99 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: insightai
+      POSTGRES_PASSWORD: insightai-dev-password
+      POSTGRES_DB: insightai
+    ports:
+      # Published so a backend running natively on the host (not through
+      # this compose file — e.g. `uvicorn app.main:app --reload` directly,
+      # the usual dev loop) can also reach it at localhost:5432. Matches
+      # backend/.env's own DATABASE_URL, which targets that same host port.
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U insightai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  leafsense:
+    build:
+      context: ../LeafSense
+      dockerfile: backend/Dockerfile
+    ports:
+      # Published so a backend running natively on the host (not through
+      # this compose file) can still reach it at localhost:8001, same
+      # rationale as postgres's port mapping above.
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    environment:
+      # Overrides backend/.env's DATABASE_URL specifically for this
+      # container: "postgres" (the service name above) resolves inside
+      # the compose network, but "localhost" — what backend/.env has, for
+      # the natively-run case above — would not (a container's own
+      # localhost isn't this network's postgres service).
+      DATABASE_URL: postgresql+psycopg2://insightai:insightai-dev-password@postgres:5432/insightai
+      # Same reasoning as DATABASE_URL above: "leafsense" (the service
+      # name) resolves inside the compose network, "localhost" (backend/.env's
+      # value, for native/dev use) would not. Not a hard dependency —
+      # vision_client.py already degrades to a Gemini-vision fallback if
+      # this is ever unreachable, so backend doesn't block startup on it
+      # (see depends_on below: ordering only, not health-gated).
+      VISION_SERVICE_URL: http://leafsense:8001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      leafsense:
+        condition: service_started
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_vector_store:/app/vector_store
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      # Cold-importing torch/transformers/sentence-transformers before
+      # uvicorn even starts listening can take 30-45s+ on a slow disk —
+      # give it real headroom before the first probe counts against retries.
+      start_period: 60s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Left unset by default: nginx (frontend/nginx.conf) proxies
+        # /api/* to the backend service internally, so the browser only
+        # ever needs to reach this one container — no VITE_API_BASE_URL
+        # needed for the standard docker-compose topology. Override with
+        # a root .env or `VITE_API_BASE_URL=... docker compose up --build`
+        # only for a genuinely cross-origin deployment. No API key build
+        # arg: the web app authenticates via individual user login (JWT)
+        # at runtime, not a build-time secret.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  backend_uploads:
+  backend_vector_store:
+  postgres_data:

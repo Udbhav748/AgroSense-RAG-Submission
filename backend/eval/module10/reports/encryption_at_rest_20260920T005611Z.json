@@ -1,0 +1,25 @@
+{
+  "metadata": {
+    "git_commit": "634973e29775a267d421aab66de045bd7bc92346",
+    "timestamp": "20260920T005611Z",
+    "command": "pytest tests/test_encryption.py -q"
+  },
+  "scope": "APPLICATION-LEVEL encryption-at-rest primitive (app/core/encryption.py), AES-256-GCM via the cryptography library. Key supplied via ENCRYPTION_KEY_B64 env var, never hardcoded, never committed.",
+  "boundary_disclosure": "This module is implemented and fully tested in isolation. It is NOT yet wired into the document-upload pipeline, FAISS index/metadata files, or PostgreSQL columns -- doing so requires a migration story for already-uploaded plaintext data and is a larger, separate change not made in this pass. PLATFORM-level encryption (e.g. an encrypted EBS volume on a live EC2 deployment) is a distinct, separate concern -- see docs/CHECKLIST.md Encryption row -- and remains unconfigured since no live deployment exists.",
+  "tests": {
+    "file": "backend/tests/test_encryption.py",
+    "cases": [
+      "generate_key produces a 32-byte key",
+      "encrypt then decrypt round-trip",
+      "ciphertext differs from plaintext and varies by nonce across calls",
+      "wrong key fails closed (EncryptionIntegrityError)",
+      "tampered ciphertext fails closed (EncryptionIntegrityError)",
+      "missing key raises an explicit error, never silently stores plaintext",
+      "malformed/wrong-length key raises an explicit error",
+      "associated_data binds ciphertext to context (prevents cross-record ciphertext swap)",
+      "truncated blob is rejected"
+    ],
+    "result": "9/9 passed"
+  },
+  "current_status": "PARTIAL (Implemented and tested; not yet integrated into the production upload/storage pipeline)"
+}

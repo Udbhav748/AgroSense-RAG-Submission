@@ -1,0 +1,41 @@
+# Prometheus scrape config for AgroSense-RAG (Feature #4).
+# The backend exposes a dependency-free Prometheus text-format registry at
+# GET /metrics (app/core/metrics.py + app/api/v1/routes/metrics.py) — this
+# job is the "real scraper" that story was designed for.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: production
+
+rule_files:
+  - /etc/prometheus/alert_rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+scrape_configs:
+  - job_name: insightai-backend
+    metrics_path: /metrics
+    # If METRICS_BEARER_TOKEN is set on the backend, uncomment and set:
+    # authorization:
+    #   credentials: "your-token"
+    static_configs:
+      - targets: ["host.docker.internal:8000"] # dev: backend on host
+        labels:
+          service: insightai-backend
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Node/container metrics for the system dashboard. Add a node-exporter
+  # service (or use cAdvisor) to populate system.json's infra panels; the
+  # dashboard is written against these job names so it lights up the moment
+  # an exporter joins the compose network.
+  - job_name: node-exporter
+    static_configs:
+      - targets: ["node-exporter:9100"]

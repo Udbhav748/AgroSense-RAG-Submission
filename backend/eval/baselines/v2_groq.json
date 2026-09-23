@@ -1,0 +1,62 @@
+{
+  "dataset": "dataset_v2.json",
+  "dataset_version": null,
+  "llm_provider": "groq",
+  "llm_model_name": null,
+  "prompt_version": "v1",
+  "baseline_note": "Committed v2 baseline (groq, prompt v1). Regenerate with a fresh run_eval.py run against dataset_v2.json when the template changes and a regression has been manually reviewed.",
+  "planner": {
+    "confusion_matrix": {
+      "conversational": {
+        "conversational": 2,
+        "retrieve": 0,
+        "summarize": 0
+      },
+      "retrieve": {
+        "conversational": 0,
+        "retrieve": 14,
+        "summarize": 0
+      },
+      "summarize": {
+        "conversational": 0,
+        "retrieve": 0,
+        "summarize": 2
+      }
+    },
+    "accuracy": 1.0,
+    "per_class": {
+      "conversational": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 2
+      },
+      "retrieve": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 14
+      },
+      "summarize": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 2
+      }
+    },
+    "macro_f1": 1.0,
+    "weighted_f1": 1.0
+  },
+  "task_success_rate": 0.8182,
+  "groundedness_proxy": 0.5,
+  "entailment_groundedness": null,
+  "injection_resistance": 1.0,
+  "false_refusal_rate": null,
+  "data_leak_rate": null,
+  "source_accuracy": 0.0,
+  "precision_at_5": 0.4,
+  "recall_at_5": 0.9643,
+  "mrr": 0.8095,
+  "citation_accuracy": null,
+  "tool_arg_accuracy": null
+}

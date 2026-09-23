@@ -1,0 +1,329 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-21T06:24:41.567303+00:00",
+    "git_commit": "b279db9",
+    "dataset_version": "observability_v2",
+    "evaluation_version": "module10_eval_v1",
+    "python_version": "3.13.9",
+    "model_provider": "groq",
+    "model_name": "openai/gpt-oss-120b",
+    "fallback_llm_provider": "gemini",
+    "embedding_model": "all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "configuration": {
+      "hybrid_search_enabled": true,
+      "reranking_enabled": false,
+      "web_search_enabled": false,
+      "vision_qa_enabled": false,
+      "structured_output_enabled": true,
+      "retrieval_grade_threshold": 0.5,
+      "top_k": 5
+    },
+    "sample_count": 35,
+    "evaluator": "eval/module10/runners/run_observability_final_eval.py"
+  },
+  "traffic_source": {
+    "description": "30 successful POST /chat + 5 error-path DELETE /documents/{missing_id} through the real FastAPI app via TestClient, LLM/embedding calls mocked (no API quota consumed) -- mirrors tests/test_main.py's own fixture pattern and run_observability_eval.py's existing sample.",
+    "n_requests": 35,
+    "wall_clock_seconds": 170.1436,
+    "time_window": "2026-09-21T06:20:50.169253+00:00 -> 2026-09-21T06:23:40.621020+00:00"
+  },
+  "instrumentation_audit": {
+    "real_runtime_instrumentation": [
+      "structured JSON logging (app/core/logging.py)",
+      "request_id/trace_id propagation (app/core/request_context.py, main.py middleware)",
+      "agent_node_trace per-node tracing (app/services/agent_graph/events.py)",
+      "tool_invocation logging (app/services/tool_registry.py's @track_tool)",
+      "LLM token/cost logging (llm_generation_completed, gemini_client.py/groq_client.py)",
+      "live GET /metrics Prometheus-style registry (app/core/metrics.py)"
+    ],
+    "offline_aggregation": [
+      "monitoring/log_aggregate.py::aggregate() -- pull-on-demand over a log file",
+      "monitoring/dashboard.py -- read-only text dashboard over the same aggregate()",
+      "eval/metrics_report.py -- eval-harness-side metrics rollup"
+    ],
+    "automated_alerting": [
+      "app/core/alerting.py::AlertEngine -- real, tested, debounced threshold engine (this pass's TASK 5 proves it runs end to end); NOT continuously invoked against a live target -- no scheduled job currently calls AlertEngine.evaluate() periodically.",
+      "monitoring/log_aggregate.py's own simpler _breaches()+send_alert() webhook path -- a SEPARATE, simpler mechanism than AlertEngine (no debounce/recovery events), used by the CLI script directly. Both exist; they are not the same code path -- documented here to avoid implying they're unified when they are not."
+    ],
+    "currently_inert_without_a_deployment": [
+      ".github/workflows/health-monitor.yml -- inert by design, no persistent deployment to poll (pre-existing, unchanged by this pass)",
+      "AlertEngine is not wired to any periodic real-metrics poll -- it is exercised here and in tests/test_alerting.py / tests/test_alert_engine_integration.py, not in a live loop."
+    ],
+    "manual_only": [
+      "monitoring/uptime_check.py and this pass's run_availability_eval.py are invoked on demand, not on a running schedule against a live target."
+    ]
+  },
+  "aggregate_metrics": {
+    "records_scanned": 924,
+    "requests": 35,
+    "failures": 5,
+    "error_rate": 0.1429,
+    "workflow_completion_rate": 0.8571,
+    "error_rate_by_category": {
+      "input": 5
+    },
+    "p50_latency_ms": 0.1,
+    "p95_latency_ms": 0.2,
+    "p99_latency_ms": 163.3,
+    "loop_capped_rate": 0.0,
+    "tool_attempts": {
+      "retrieval": 30
+    },
+    "tool_successes": {
+      "retrieval": 30
+    },
+    "tool_success_rate": {
+      "retrieval": 1.0
+    },
+    "timed_out_calls": 0,
+    "timeout_rate": 0.0,
+    "total_tokens": 0,
+    "estimated_cost_usd": 0.0,
+    "agent_completions": 0,
+    "tool_calls": 30,
+    "node_success_rate": 1.0,
+    "avg_node_latency_ms": 5496.35,
+    "avg_agent_latency_ms": 0.0,
+    "avg_tool_latency_ms": 5496.35,
+    "handoffs": 0,
+    "correct_handoffs": 0,
+    "agent_handoff_accuracy": 0.0,
+    "agent_idle_time_ms": 0.0,
+    "agent_idle_gaps": 0
+  },
+  "aggregate_error_rate": {
+    "value": 0.1429,
+    "formula": "failed_requests / total_requests",
+    "by_taxonomy_category": {
+      "input": 5
+    },
+    "note": "Both the single aggregate number and the taxonomy breakdown are always reported together -- the aggregate does not replace the category breakdown (TASK 3)."
+  },
+  "latency_percentiles_ms": {
+    "p50": 0.1,
+    "p95": 0.2,
+    "p99": 163.3
+  },
+  "tool_and_retry": {
+    "tool_attempts": {
+      "retrieval": 30
+    },
+    "tool_successes": {
+      "retrieval": 30
+    },
+    "tool_success_rate": {
+      "retrieval": 1.0
+    },
+    "timed_out_calls": 0,
+    "loop_capped_rate": 0.0,
+    "retry_events": 0,
+    "retried_requests": 0,
+    "retry_success_rate": 0.0,
+    "providers": {}
+  },
+  "token_and_cost": {
+    "total_tokens": 0,
+    "estimated_cost_usd": 0.0,
+    "note": "0 in this run because the LLM client is mocked (no live API call) -- real token/cost figures from live runs are reported separately in eval/module10/reports/provider_ab_eval_*.json and docs/MODULE10_RESULTS.md's latency/cost sections, not fabricated here."
+  },
+  "availability": {
+    "metadata": {
+      "timestamp": "2026-09-21T06:24:40.959180+00:00",
+      "git_commit": "b279db9",
+      "dataset_version": "availability_v1",
+      "evaluation_version": "module10_eval_v1",
+      "python_version": "3.13.9",
+      "model_provider": "groq",
+      "model_name": "openai/gpt-oss-120b",
+      "fallback_llm_provider": "gemini",
+      "embedding_model": "all-MiniLM-L6-v2",
+      "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "configuration": {
+        "hybrid_search_enabled": true,
+        "reranking_enabled": false,
+        "web_search_enabled": false,
+        "vision_qa_enabled": false,
+        "structured_output_enabled": true,
+        "retrieval_grade_threshold": 0.5,
+        "top_k": 5
+      },
+      "sample_count": 15
+    },
+    "label": "bounded local service availability measurement",
+    "methodology": "A real `uvicorn app.main:app` subprocess is started on localhost, then GET /health is probed repeatedly over a bounded local wall-clock window using the same monitoring.uptime_check._probe() function the real uptime checker uses. Availability = successful probes / total probes. This is NOT production availability -- there is no persistent production deployment for this project -- and this short window is a smoke/validation measurement, not an SLO.",
+    "started": true,
+    "endpoint_tested": "http://127.0.0.1:8813/health",
+    "total_probes": 15,
+    "successful_probes": 15,
+    "failed_probes": 0,
+    "availability": 1.0,
+    "test_duration_seconds": 15.0,
+    "probe_interval_seconds": 1.0,
+    "latency_ms": {
+      "mean": 50.36,
+      "min": 13.02,
+      "max": 145.21
+    },
+    "per_probe": [
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 57.76
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 145.21
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 38.09
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 48.52
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 22.58
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 54.53
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 38.98
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 13.02
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 48.98
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 43.62
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 63.49
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 20.55
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 31.19
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 112.01
+      },
+      {
+        "healthy": true,
+        "status_code": 200,
+        "latency_ms": 16.88
+      }
+    ],
+    "limitations": [
+      "Single machine, single short local run -- not a distributed or long-running SLO measurement.",
+      "Measures only the health endpoint's reachability/latency, not full request-path availability under real traffic (see the observability report's error_rate for that).",
+      "The uvicorn process, OS, and network stack are all local to this machine -- results do not generalize to a real hosted deployment's availability characteristics."
+    ]
+  },
+  "alerting_validation": {
+    "results": [
+      {
+        "scenario": "error_rate_above_threshold",
+        "threshold": 0.05,
+        "input_metric_value": 0.5,
+        "expected_alert": true,
+        "actual_alert_triggered": true,
+        "payload_produced": true
+      },
+      {
+        "scenario": "p95_latency_above_threshold",
+        "threshold": 3.0,
+        "input_metric_value": 10.0,
+        "expected_alert": true,
+        "actual_alert_triggered": true,
+        "payload_produced": true
+      },
+      {
+        "scenario": "health_check_success_below_minimum",
+        "threshold": 0.5,
+        "input_metric_value": 0.0,
+        "expected_alert": true,
+        "actual_alert_triggered": true,
+        "payload_produced": true
+      },
+      {
+        "scenario": "real_measured_error_rate_within_threshold",
+        "threshold": 0.05,
+        "input_metric_value": 0.1429,
+        "expected_alert": true,
+        "actual_alert_triggered": true,
+        "payload_produced": true
+      }
+    ],
+    "all_scenarios_behaved_as_expected": true,
+    "note": "Scenarios 1-3 use deliberately synthetic breach values (documented as such) to prove the threshold-evaluation-to-alert-payload path actually runs; scenario 4 uses this run's own real measured error_rate to prove the healthy/no-alert path also runs against real data, not only synthetic inputs."
+  },
+  "dashboard_validation": {
+    "required_views_present": {
+      "availability": true,
+      "latency": true,
+      "error_rate": true,
+      "tool_success": true,
+      "retry_activity": true,
+      "requests": true,
+      "token_usage": true,
+      "cost": true
+    },
+    "all_required_views_present": true,
+    "retry_activity": {
+      "retry_events": 0,
+      "retried_requests": 0,
+      "retry_success_rate": 0.0,
+      "providers": {}
+    },
+    "endpoint_breakdown": {
+      "chat_query_handled": 30,
+      "request_failed": 5
+    },
+    "requests_per_minute": 35.0,
+    "validated_against": "the same captured records this report's aggregate metrics come from (see traffic_source below) -- not a separate/hypothetical log file."
+  },
+  "prompt_logging_status": {
+    "log_prompt_content_default": false,
+    "log_prompt_content_current_setting": false,
+    "prompt_version_always_recorded": true,
+    "boundary": "Exact prompt content is a controlled/debug-only capture (Settings.log_prompt_content, off by default) -- see tests/test_prompt_capture_boundary.py. Never automatically enabled by this pass."
+  },
+  "limitations": [
+    "Traffic is a controlled local TestClient sample with a mocked LLM -- application overhead latency (routing, retrieval, graph execution) is real; live LLM provider round-trip latency is not included here (see the Provider A-B evaluation for that).",
+    "35 requests on a single local process is not a production-scale sample.",
+    "Availability is a bounded local measurement (see the 'availability' block's own label) -- not production availability, no SLO is claimed.",
+    "AlertEngine's automated path is validated here to prove it runs correctly against real and synthetic inputs -- it is not continuously/automatically invoked against a live target on a schedule; no such deployment exists for this project.",
+    "No hosted dashboard/durable monitoring service exists -- monitoring/dashboard.py is a dependency-free, on-demand terminal view over a log file, validated here against real captured records, not a Grafana-style live service.",
+    "No long-lived SLO measurement exists or is claimed.",
+    "No centralized logging service exists -- logs are process-local stdout JSON lines."
+  ]
+}
